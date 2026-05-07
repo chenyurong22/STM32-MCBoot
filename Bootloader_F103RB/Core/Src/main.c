@@ -1,4 +1,5 @@
 /* USER CODE BEGIN Header */
+// todo: implement uart drivers by self to reduce flash space? 
 #ifdef DEBUG
 #warning "DEBUG BUILD"
 #endif
@@ -26,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "debug.h"
 #include "flash.h"
+#include "uart_reception.h"
 // #include <stdio.h>
 #ifdef DEBUG
 #include "printf-stdarg.c"
@@ -49,17 +51,20 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CRC_HandleTypeDef hcrc;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 const uint8_t BL_Version[2] = { BL_VERSION_MAJOR, BL_VERSION_MINOR };
-static const uint8_t test_pattern[] = {0xDE, 0xAD, 0xBE, 0xEF};
+// static const uint8_t test_pattern[] = {0xDE, 0xAD, 0xBE, 0xEF};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_CRC_Init(void);
 /* USER CODE BEGIN PFP */
 void Task_BL_SetLED(void);
 void Task_BL_BlinkLED(void);
@@ -105,9 +110,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
   Task_BL_SetLED();
-  DEBUG_PRINTF("Starting bootloader (%d.%d)...", BL_Version[0], BL_Version[1]); // ls /dev/tty.*
+  DEBUG_PRINTF("Starting bootloader (%d.%d)...\r\n", BL_Version[0], BL_Version[1]); // ls /dev/tty.*
                                                                               // screen /dev/tty.usbmodem1103 115200
                                                                               // exit: Ctrl + A, then K
   check_for_update();
@@ -161,6 +167,32 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief CRC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CRC_Init(void)
+{
+
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CRC_Init 2 */
+
+  /* USER CODE END CRC_Init 2 */
+
 }
 
 /**
@@ -262,17 +294,17 @@ void Task_BL_BlinkLED(void) {
 
 static void goto_application(void) {
   if ((*(volatile uint32_t *)SLOTA_START_ADDRESS) == 0xFFFFFFFF) {
-    DEBUG_PRINTF("No app found, staying in bootloader...");
+    DEBUG_PRINTF("No app found, staying in bootloader...\r\n");
     return;
   } else {
-DEBUG_PRINTF("Jumping to application...");
+DEBUG_PRINTF("Jumping to application...\r\n");
  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-  void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (0x08004000 + 4)); // slot A's reset handler
+  void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (SLOTA_START_ADDRESS + 4U)); // slot A's reset handler
   //   HAL_DeInit();        // de-init peripherals + mask SysTick IRQ
   // SysTick->CTRL = 0;  // fully stop the counter itself
   // __disable_irq(); // EXTI interrupt enabled (blue button, EXTI15_10_IRQn). If fired during/after jump, before app sets up SCB->VTOR, will call the bootloader's ISR handler — which no longer has a valid stack context
 
-  __set_MSP((*(volatile uint32_t *) 0x08004000)); //  used by CPU for exception handlers, HardFaults, SysTick, UART interrupts, any ISR. psp = application thread code
+  __set_MSP(*(volatile uint32_t *)SLOTA_START_ADDRESS); //  used by CPU for exception handlers, HardFaults, SysTick, UART interrupts, any ISR. psp = application thread code
   app_reset_handler(); // call function pointer 
   }
   
@@ -284,24 +316,32 @@ Released State: High (HAL_GPIO_ReadPin returns GPIO_PIN_SET or 1)
 static void check_for_update(void) {
 
   GPIO_PinState Update_Pin_State;
-  uint32_t end_tick = HAL_GetTick() + 3000; // 5 seconds from now
+  uint32_t end_tick = HAL_GetTick() + 5000; // 5 seconds from now
 
-  DEBUG_PRINTF("Press the User Button B1 PC13 to trigger UART update...");
+  DEBUG_PRINTF("Press the User Button B1 PC13 to trigger UART update...\r\n");
   do {
     Update_Pin_State = HAL_GPIO_ReadPin( B1_GPIO_Port, B1_Pin ); 
     uint32_t current_tick = HAL_GetTick(); 
 
-    if ((Update_Pin_State != GPIO_PIN_RESET ) || (current_tick > end_tick)) { // either button not pressed OR current tick > end_tick after 5 second window
+    if ((Update_Pin_State == GPIO_PIN_RESET ) || (current_tick > end_tick)) { // either button not pressed OR current tick > end_tick after 5 second window
       break;
     }
   } while (1);
   if (Update_Pin_State == GPIO_PIN_RESET) {
-    DEBUG_PRINTF("Starting Firmware Download!");
-    if (Flash_ErasePage(SLOTA_START_ADDRESS) != FLASH_OK || Flash_Write(SLOTA_START_ADDRESS, test_pattern /*src*/, sizeof(test_pattern)/*len*/) != FLASH_OK || Flash_Verify(SLOTA_START_ADDRESS, test_pattern /*src*/, sizeof(test_pattern)/*len*/) != FLASH_OK) {
-        DEBUG_PRINTF("Firmware update error! Halt!\r\n"); while (1) { Task_BL_BlinkLED(); };
+    DEBUG_PRINTF("Starting Firmware Download!\r\n");
+    // // if (Flash_ErasePage(SLOTA_START_ADDRESS) != FLASH_OK || Flash_Write(SLOTA_START_ADDRESS, test_pattern /*src*/, sizeof(test_pattern)/*len*/) != FLASH_OK || Flash_Verify(SLOTA_START_ADDRESS, test_pattern /*src*/, sizeof(test_pattern)/*len*/) != FLASH_OK) {
+    // //     DEBUG_PRINTF("Firmware update error! Halt!\r\n"); while (1) { Task_BL_BlinkLED(); };
+    // }
+    HAL_UART_Transmit(&huart2, (uint8_t *)"READY\r\n", 7, 100);
+    if (UART_Receive() == RECEP_OK) {
+      DEBUG_PRINTF("Firmware update done! Rebooting...\r\n");
+      HAL_UART_Transmit(&huart2, (uint8_t *)"OK\r\n", 4, 100);
+      HAL_Delay(100);
+      HAL_NVIC_SystemReset();
+    } else {
+      DEBUG_PRINTF("Firmware update error! Halt!\r\n"); while (1) { Task_BL_BlinkLED(); };
     }
-    DEBUG_PRINTF("Firmware update done! Rebooting...\r\n");
-    HAL_NVIC_SystemReset();
+    // will fall to goto_application() as button not pressed within 5 secs
   }
 }
 /* USER CODE END 4 */

@@ -8,9 +8,9 @@
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
-            "showDevDebugOutput": "none",
             "servertype": "stlink",
-            "device": "STM32F103RB"
-        }
+            "device": "STM32F103RB",
+            "showDevDebugOutput": "raw",
+        },
     ]
 }

@@ -36,7 +36,7 @@ rule C_COMPILER__Bootloader_F103RB_unscanned_Release
 
 rule C_EXECUTABLE_LINKER__Bootloader_F103RB_Release
   command = $PRE_LINK && /opt/homebrew/bin/arm-none-eabi-gcc $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
-  description = Linking C executable $TARGET_FILE
+  description = Linking C executable $TARGET_FILE; Generating .out file from ELF
   restat = $RESTAT
 
 
