@@ -3,17 +3,12 @@
  * @note crc source: https://github.com/Steppeschool/stm32-custom-bootloader/tree/main
  */
 
-/* a/b logic:
-Program into B -> Erase A -> Copy B into A
-Essentially B is a staging area. Later we can boot from different slots for a true a/b system. 
-both slots now contain same firmware.
-*/
-
-#include "uart_reception.h"
-#include "flash.h"
+#include "Middleware/uart_reception.h"
+#include "Middleware/flash.h"
+#include "Middleware/verify.h"
 #include "stm32f1xx_hal.h"
-#include "aes_ctr.h"
-#include "aes.h"
+#include "AES128/aes_ctr.h"
+#include "AES128/aes.h"
 
 extern UART_HandleTypeDef huart2;
 extern CRC_HandleTypeDef hcrc;
@@ -124,5 +119,19 @@ RECEP_STATUS UART_Receive(uint8_t* received_header, Metadata *meta) {
     uint32_t received_crc_value = (uint32_t)crc_buf[0] | (uint32_t)crc_buf[1] << 8 | (uint32_t)crc_buf[2] << 16 | (uint32_t)crc_buf[3] << 24;
     if(calculated_crc != received_crc_value) return RECEP_ERR_CRC32;
     send_ack();
+
+    uint8_t signature[64];
+    uint32_t which_slot_addr = meta->SLOTA_LATEST ? SLOTB_START_ADDRESS : SLOTA_START_ADDRESS;
+    uint32_t sig_addr = write_addr - 64U; // signature is the last 64 bytes written to flash
+    for (int i = 0; i < 64; i++) {
+        signature[i] = *(volatile uint8_t *)(sig_addr + i); 
+    }
+    if (!Verify_Firmware((uint8_t *)which_slot_addr, total_len - 64U, signature)) {
+        send_nack();
+        Flash_EraseSlot(which_slot_addr, SLOT_NUM_PAGES);
+        return RECEP_ERR_SIG; 
+    }
+    send_ack(); 
+
     return RECEP_OK;
 }

@@ -1,10 +1,14 @@
 /* USER CODE BEGIN Header */
 /* 
 TODOS:
-  - Implement rollback
   - Implement uart driver by self to reduce flash space
   - Fix includes
   - Calculate crc_accumulate by hand for report
+  - IMPORTANT: MCUboot avoids directly depending on printf() by using a lightweight logging abstraction layer 
+              (BOOT_LOG_INF, BOOT_LOG_ERR, etc.) that routes messages to a backend chosen per platform (Zephyr logging, 
+              UART, RTT, or completely disabled). In your bootloader, you can do the same by replacing printf calls with 
+              simple macros that ultimately call a tiny UART string function using HAL_UART_Transmit(), while 
+              compiling logging out entirely in builds to avoid pulling in the large printf formatting code from newlib.
 
 adding external code from: 
   AES-128 CTR: https://github.com/kokke/tiny-AES-c
@@ -38,11 +42,11 @@ adding external code from:
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "debug.h"
-#include "flash.h"
-#include "uart_reception.h"
-#include "metadata.h"
-#ifdef DEBUG
+#include "logging.h"
+#include "Middleware/flash.h"
+#include "Middleware/uart_reception.h"
+#include "Middleware/metadata.h"
+#if BL_LOG_LEVEL == BL_LOG_PRINTF
 #include "printf-stdarg.c"
 #endif
 /* USER CODE END Includes */
@@ -91,9 +95,10 @@ void Task_BL_SetLED(void);
 void Task_BL_BlinkLED(void);
 static void goto_application(Metadata *meta);
 static void check_for_update(Metadata *meta);
-#ifdef DEBUG
+#if BL_LOG_LEVEL == BL_LOG_PRINTF
 int uart_putchar(int c);
 #endif
+int Rollback_Check(Metadata *m);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -110,6 +115,14 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         uart_size = Size;
         uart_rx_done = 1;
     }
+}
+
+int Rollback_Check(Metadata *m) {
+  if (meta.bootcount < BOOT_COUNT_MAX) return 0;
+  meta.SLOTA_LATEST = !meta.SLOTA_LATEST; // flip to previous slot 
+  meta.bootcount = 0;
+  Metadata_Save(&meta); 
+  return 1;
 }
 /* USER CODE END 0 */
 
@@ -149,16 +162,15 @@ int main(void)
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
   Task_BL_SetLED();
-  DEBUG_PRINTF("Starting bootloader (%d.%d)...\r\n", BL_Version[0], BL_Version[1]); // ls /dev/tty.*
+  // DEBUG_PRINTF("Starting bootloader (%d.%d)...\r\n", BL_Version[0], BL_Version[1]); // ls /dev/tty.*
                                                                               // screen /dev/tty.usbmodem1103 115200
                                                                               // exit: Ctrl + A, then K
+  BL_LOG("Starting bootloader (0.1)\r\n");
   Metadata_Load(&meta);
-  DEBUG_PRINTF("Metadata: Slot: %d, Boot Count: %d.\r\n", meta.SLOTA_LATEST, meta.bootcount);
-  if (meta.bootcount >= BOOT_COUNT_MAX) { // rollback
-    DEBUG_PRINTF("Boot count exceeded! Forcing update mode...\r\n");
-    meta.bootcount = 0;
-    Metadata_Save(&meta);
-    // todo: implement force_update_mode(&meta) then bypass check_for_update(&meta)
+  // DEBUG_PRINTF("Metadata: Slot: %d, Boot Count: %d.\r\n", meta.SLOTA_LATEST, meta.bootcount);
+  if (Rollback_Check(&meta)) { // rollback
+    // DEBUG_PRINTF("Boot count exceeded! Rolling back to Slot %d.\r\n", meta.SLOTA_LATEST);
+    BL_LOG("Bootcount exceeded. Rolling back to previous version.");
   }
   Metadata_IncrementBootCount(&meta); // increment before jumping
   check_for_update(&meta);
@@ -337,7 +349,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-#ifdef DEBUG
+#if BL_LOG_LEVEL == BL_LOG_PRINTF
 int uart_putchar(int c)
 {
   HAL_UART_Transmit(&huart2, (uint8_t *)&c, 1, HAL_MAX_DELAY);
@@ -359,10 +371,10 @@ void Task_BL_BlinkLED(void) {
 static void goto_application(Metadata *meta) {
   if (meta->SLOTA_LATEST) {
     if ((*(volatile uint32_t *)SLOTA_START_ADDRESS) == 0xFFFFFFFF) {
-        DEBUG_PRINTF("No app found, staying in bootloader...\r\n");
+        BL_LOG("No app found, staying in bootloader...\r\n");
         return;
       } else {
-    DEBUG_PRINTF("Jumping to application...\r\n");
+    BL_LOG("Jumping to application...\r\n");
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
       void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (SLOTA_START_ADDRESS + 4U)); // slot A's reset handler
       //   HAL_DeInit();        // de-init peripherals + mask SysTick IRQ
@@ -374,10 +386,10 @@ static void goto_application(Metadata *meta) {
       }
   } else {
       if ((*(volatile uint32_t *)SLOTB_START_ADDRESS) == 0xFFFFFFFF) {
-        DEBUG_PRINTF("No app found, staying in bootloader...\r\n");
+        BL_LOG("No app found, staying in bootloader...\r\n");
         return;
       } else {
-    DEBUG_PRINTF("Jumping to application...\r\n");
+    BL_LOG("Jumping to application...\r\n");
     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
       void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (SLOTB_START_ADDRESS + 4U)); // slot B's reset handler
         SCB->VTOR = SLOTB_START_ADDRESS;
@@ -395,7 +407,7 @@ static void check_for_update(Metadata *meta) {
   GPIO_PinState Update_Pin_State;
   uint32_t end_tick = HAL_GetTick() + 5000; // 5 seconds from now
 
-  DEBUG_PRINTF("Press the User Button B1 PC13 to trigger UART update...\r\n");
+  BL_LOG("Press the User Button B1 PC13 to trigger UART update...\r\n");
   do {
     Update_Pin_State = HAL_GPIO_ReadPin( B1_GPIO_Port, B1_Pin ); 
     uint32_t current_tick = HAL_GetTick(); 
@@ -405,7 +417,7 @@ static void check_for_update(Metadata *meta) {
     }
   } while (1);
   if (Update_Pin_State == GPIO_PIN_RESET /*|| DBG_FORCE_UPDATE*/) {
-    DEBUG_PRINTF("Starting Firmware Download!\r\n");
+    BL_LOG("Starting Firmware Download!\r\n");
     HAL_UART_Transmit(&huart2, (uint8_t *)"READY\r\n", 7, 100);
     uart_rx_done = 0; uart_size = 0;
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, header_buf, sizeof(header_buf));
@@ -414,11 +426,12 @@ static void check_for_update(Metadata *meta) {
     if (UART_Receive(header_buf, meta) == RECEP_OK) {
       Metadata_UpdateAfterRecieve(meta, meta->SLOTA_LATEST);
       HAL_UART_Transmit(&huart2, (uint8_t *)"OK\r\n", 4, 100);
-      DEBUG_PRINTF("Firmware update done! Programming into slot %d.\r\nRebooting...\r\n", meta->SLOTA_LATEST); // slot A = 1, B = 0
+      // DEBUG_PRINTF("Firmware update done! Programming into slot %d.\r\nRebooting...\r\n", meta->SLOTA_LATEST); // slot A = 1, B = 0
+      BL_LOG("Firmware update done!\r\nRebooting...\r\n");
       HAL_Delay(100);
       HAL_NVIC_SystemReset();
     } else {
-      DEBUG_PRINTF("Firmware update error! Halt!\r\n"); while (1) { Task_BL_BlinkLED(); };
+      BL_LOG("Firmware update error! Halt!\r\n"); while (1) { Task_BL_BlinkLED(); };
     }
     // will fall to goto_application() as button not pressed within 5 secs
   }

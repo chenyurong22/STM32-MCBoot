@@ -1,2 +1,3 @@
 build/
 .DS_Store
+STM32F103XX_FLASH.ld

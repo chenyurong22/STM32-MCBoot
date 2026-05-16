@@ -40,16 +40,23 @@ add_subdirectory(cmake/stm32cubemx)
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
+    Core/Inc/AES128
+    Core/Inc/uECC
+    Core/Inc/SHA256
+    Core/Inc/Middleware
 )
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    Core/Src/flash.c
-    Core/Src/uart_reception.c
-    Core/Src/metadata.c
-    Core/Src/aes.c 
-    Core/Src/aes_ctr.c
+    Core/Src/Middleware/flash.c
+    Core/Src/Middleware/uart_reception.c
+    Core/Src/Middleware/metadata.c
+    Core/Src/Middleware/verify.c
+    Core/Src/AES128/aes.c 
+    Core/Src/AES128/aes_ctr.c
+    Core/Src/uECC/uECC.c
+    Core/Src/SHA256/sha256.c
 )
 
 # Add include paths
@@ -60,7 +67,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
-    DEBUG # for uart printing during debugging
+    uECC_SUPPORTS_secp160r1=0 # as only curve P-256 (secp256r1) is needed from uECC
+    uECC_SUPPORTS_secp192r1=0
+    uECC_SUPPORTS_secp224r1=0
+    uECC_SUPPORTS_secp256r1=1
+    uECC_SUPPORTS_secp256k1=0
+    uECC_SUPPORT_COMPRESSED_POINT=0
 )
 
 # Remove wrong libob.a library dependency when using cpp files
@@ -78,4 +90,8 @@ add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
             $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
             $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/$<TARGET_FILE_BASE_NAME:${CMAKE_PROJECT_NAME}>.out
     COMMENT "Generating .out file from ELF"
+)
+
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE  # optimize for size
+    -Os
 )

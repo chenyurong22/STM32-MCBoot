@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "flash.h"
+#include "Middleware/flash.h"
 
 #define METADATA_ADDRESS 0x0801E000
 #define METADATA_MAGIC 0xDEADBEEFU // start of metadata

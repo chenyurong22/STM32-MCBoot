@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "metadata.h"
+#include "Middleware/metadata.h"
 
 /*
 Packet structure little endian:
@@ -27,7 +27,8 @@ typedef enum {
     RECEP_ERR_START,
     RECEP_ERR_SIZE,
     RECEP_ERR_RECV,
-    RECEP_ERR_CRC32
+    RECEP_ERR_CRC32,
+    RECEP_ERR_SIG,
 } RECEP_STATUS;
 
 RECEP_STATUS UART_Receive(uint8_t* received_header, Metadata *meta);

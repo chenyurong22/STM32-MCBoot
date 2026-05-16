@@ -1,6 +1,6 @@
-#include "flash.h"
+#include "Middleware/flash.h"
 #include "stm32f1xx_hal.h"
-#include "metadata.h"
+#include "Middleware/metadata.h"
 
 /**
  * @brief private fn checks slotA start -< addr > slotB end

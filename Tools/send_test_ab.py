@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 from Crypto.Cipher import AES
 import encrypt_firmware
+import sign_firmware
+import keygen
 
 PORT       = "/dev/tty.usbmodem103"
 BAUDRATE   = 115200
@@ -83,15 +85,24 @@ def send_firmware(port: str):
 
         # now we know the slot — load the correct binary
         bin_path = SLOT_PATHS[slot]
-        output_path = '/Users/siddharthmanikant/Desktop/Bachelor_Project/Python/Application.enc.bin'
         plaintext = open(bin_path, "rb").read()
 
-        # compute CRC over plaintext — this is what MCU will have after decryption
-        crc = compute_crc32_stm32(plaintext)
+        # step 1: sign the plaintext — appends 64-byte signature to end
+        signed_path   = '/Users/siddharthmanikant/Desktop/Bachelor_Project/Tools/Application.signed.bin'
+        encrypted_path = '/Users/siddharthmanikant/Desktop/Bachelor_Project/Tools/Application.enc.bin'
+        private_key_path = '/Users/siddharthmanikant/Desktop/Bachelor_Project/Tools/private_key.pem'
 
-        # encrypt for transmission
-        encrypt_firmware.encrypt_firmware(bin_path, output_path)
-        data = open(output_path, "rb").read()
+        sign_firmware.sign_firmware(private_key_path, bin_path, signed_path)
+
+        # step 2: encrypt the signed binary
+        encrypt_firmware.encrypt_firmware(signed_path, encrypted_path)
+
+        # step 3: CRC over signed plaintext (what MCU has after decryption)
+        signed_plaintext = open(signed_path, "rb").read()
+        crc = compute_crc32_stm32(signed_plaintext)
+
+        # step 4: send the encrypted binary
+        data = open(encrypted_path, "rb").read()
         
         print(f"Slot {slot} assigned")
         print(f"Firmware : {len(data)} bytes")
@@ -122,6 +133,8 @@ def send_firmware(port: str):
         ser.write(struct.pack("<I", crc))
         expect_ack(ser, "CRC")
 
+        expect_ack(ser, "signature") # new
+
         print("Waiting for final result...")
         result = wait_response(ser)
         if result == "OK":
@@ -133,4 +146,5 @@ def send_firmware(port: str):
             sys.exit(1)
 
 if __name__ == "__main__":
+    keygen.keygen
     send_firmware(PORT)
