@@ -61,6 +61,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Core/Src/flash.c
     Core/Src/metadata.c
+    Core/Src/startup_confirm.c
 )
 
 # Add include paths
@@ -87,4 +88,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+)
+
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE  # optimize for size
+    -Os
 )

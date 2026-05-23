@@ -1,12 +1,14 @@
 #include "flash.h"
 #include "stm32f1xx_hal.h"
+#include "metadata.h"
 
 /**
  * @brief private fn checks slotA start -< addr > slotB end
  * @return int 1 if valid addr
  */
 static int is_valid_slot_address(uint32_t addr) { // private fn
-    return (addr >= SLOTA_START_ADDRESS) && (addr < (SLOTB_START_ADDRESS + (SLOT_NUM_PAGES * FLASH_PAGE_SIZE_BL)));
+    return ( (( addr >= SLOTA_START_ADDRESS) && (addr < (SLOTB_START_ADDRESS + (SLOT_NUM_PAGES * FLASH_PAGE_SIZE_BL)))) ||
+    (addr >= METADATA_ADDRESS && addr < FLASH_EOF) );
 }
 
 Flash_Status Flash_ErasePage(uint32_t page_address) {

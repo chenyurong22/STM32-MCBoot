@@ -141,10 +141,9 @@ RECEP_STATUS UART_Receive(uint8_t* received_header, Metadata *meta) {
         Flash_EraseSlot(which_slot_addr, SLOT_NUM_PAGES);
         return RECEP_ERR_SIG; 
     }
-    // #ifndef DEBUG 
-    meta->FW_VER_MAJOR = incoming_fwv_major;
-    meta->FW_VER_MINOR = incoming_fwv_minor;
-    // #endif
+
+    // meta->FW_VER_MAJOR = incoming_fwv_major; // done by app after confirmed healthy
+    // meta->FW_VER_MINOR = incoming_fwv_minor;
     send_ack(); 
 
     return RECEP_OK;

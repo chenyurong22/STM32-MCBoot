@@ -70,6 +70,8 @@ adding external code from:
 /* Private variables ---------------------------------------------------------*/
 CRC_HandleTypeDef hcrc;
 
+// IWDG_HandleTypeDef hiwdg;
+
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
@@ -85,6 +87,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_CRC_Init(void);
+// static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 void Task_BL_SetLED(void);
 void Task_BL_BlinkLED(void);
@@ -113,9 +116,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 }
 
 int Rollback_Check(Metadata *m) {
-  if (m->bootcount < BOOT_COUNT_MAX) return 0;
+  if (m->bootcount <= BOOT_COUNT_MAX) return 0;
+  if (m->runtime_fault_count <= RUNTIME_BOOT_COUNT_MAX) return 0;
   m->SLOTA_LATEST = !meta.SLOTA_LATEST; // flip to previous slot 
   m->bootcount = 0;
+  m->image_state = IMG_STATE_REVERTED;
   Metadata_Save(m); 
   return 1;
 }
@@ -129,18 +134,18 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint32_t reset_cause = RCC->CSR;
+  __HAL_RCC_CLEAR_RESET_FLAGS(); // clear flags that tell you why the MCU reset as they are sticky
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-
   HAL_Init();
+  
 
   /* USER CODE BEGIN Init */
-
+  
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -155,6 +160,7 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_CRC_Init();
+
   /* USER CODE BEGIN 2 */
   Task_BL_SetLED();
   // DEBUG_PRINTF("Starting bootloader (%d.%d)...\r\n", BL_Version[0], BL_Version[1]); // ls /dev/tty.*
@@ -162,12 +168,33 @@ int main(void)
                                                                               // exit: Ctrl + A, then K
   BL_LOG("Starting bootloader (0.1)\r\n");
   Metadata_Load(&meta);
+
   // DEBUG_PRINTF("Metadata: Slot: %d, Boot Count: %d.\r\n", meta.SLOTA_LATEST, meta.bootcount);
-  if (Rollback_Check(&meta)) { // rollback
-    // DEBUG_PRINTF("Boot count exceeded! Rolling back to Slot %d.\r\n", meta.SLOTA_LATEST);
-    BL_LOG("Bootcount exceeded. Rolling back to previous version.");
+  if (meta.image_state == IMG_STATE_PENDING) {
+    meta.image_state = IMG_STATE_TRIAL;
+    // reset bootcount in Metadata_UpdateAfterRecieve
+    Metadata_Save(&meta);
   }
-  Metadata_IncrementBootCount(&meta); // increment before jumping
+
+  if (meta.image_state == IMG_STATE_TRIAL) {
+    Metadata_IncrementBootCount(&meta); // increment before jumping
+    if (Rollback_Check(&meta)) {
+      // DEBUG_PRINTF("Boot count exceeded! Rolling back to Slot %d.\r\n", meta.SLOTA_LATEST);
+      BL_LOG("Bootcount exceeded. Rolling back to previous version.");
+    }
+  }
+
+  if (meta.image_state == IMG_STATE_HEALTHY) {
+    if (reset_cause & RCC_CSR_IWDGRSTF) { // iwdg reset. app failed to pet
+        meta.runtime_fault_count++; // 10 resets allowed
+        Metadata_Save(&meta);
+        BL_LOG("IWDG reset detected\r\n");
+    }
+    if (Rollback_Check(&meta)) {
+      BL_LOG("Runtime faults exceeded. Rolling back to previous version.");
+    }
+  }
+  
   check_for_update(&meta);
   goto_application(&meta);
   /* USER CODE END 2 */
@@ -195,9 +222,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  // RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
@@ -246,6 +274,34 @@ static void MX_CRC_Init(void)
   /* USER CODE END CRC_Init 2 */
 
 }
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+// static void MX_IWDG_Init(void)
+// {
+
+//   /* USER CODE BEGIN IWDG_Init 0 */
+
+//   /* USER CODE END IWDG_Init 0 */
+
+//   /* USER CODE BEGIN IWDG_Init 1 */
+
+//   /* USER CODE END IWDG_Init 1 */
+//   hiwdg.Instance = IWDG;
+//   hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
+//   hiwdg.Init.Reload = 4095;
+//   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
+//   /* USER CODE BEGIN IWDG_Init 2 */
+
+//   /* USER CODE END IWDG_Init 2 */
+
+// }
 
 /**
   * @brief USART2 Initialization Function
@@ -366,31 +422,39 @@ void Task_BL_BlinkLED(void) {
 static void goto_application(Metadata *meta) {
   if (meta->SLOTA_LATEST) {
     if ((*(volatile uint32_t *)SLOTA_START_ADDRESS) == 0xFFFFFFFF) {
-        BL_LOG("No app found, staying in bootloader...\r\n");
-        return;
-      } else {
-    BL_LOG("Jumping to application...\r\n");
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+      BL_LOG("No app found, staying in bootloader...\r\n");
+      return;
+    } else {
+      BL_LOG("Jumping to application...\r\n");
+      HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
       void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (SLOTA_START_ADDRESS + 4U)); // slot A's reset handler
       //   HAL_DeInit();        // de-init peripherals + mask SysTick IRQ
       // SysTick->CTRL = 0;  // fully stop the counter itself
       // __disable_irq(); // EXTI interrupt enabled (blue button, EXTI15_10_IRQn). If fired during/after jump, before app sets up SCB->VTOR, will call the bootloader's ISR handler — which no longer has a valid stack context
-        SCB->VTOR = SLOTA_START_ADDRESS; // so the app doesn't need to do it 
+      SCB->VTOR = SLOTA_START_ADDRESS; // so the app doesn't need to do it 
       __set_MSP(*(volatile uint32_t *)SLOTA_START_ADDRESS); //  used by CPU for exception handlers, HardFaults, SysTick, UART interrupts, any ISR. psp = application thread code
+      // #ifdef DEBUG
+      // __HAL_DBGMCU_FREEZE_IWDG();  // don't let breakpoints trigger resets
+      // #endif
+      // MX_IWDG_Init();
       app_reset_handler(); // call function pointer 
-      }
+    }
   } else {
-      if ((*(volatile uint32_t *)SLOTB_START_ADDRESS) == 0xFFFFFFFF) {
-        BL_LOG("No app found, staying in bootloader...\r\n");
-        return;
-      } else {
-    BL_LOG("Jumping to application...\r\n");
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+    if ((*(volatile uint32_t *)SLOTB_START_ADDRESS) == 0xFFFFFFFF) {
+      BL_LOG("No app found, staying in bootloader...\r\n");
+      return;
+    } else {
+      BL_LOG("Jumping to application...\r\n");
+      HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
       void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (SLOTB_START_ADDRESS + 4U)); // slot B's reset handler
-        SCB->VTOR = SLOTB_START_ADDRESS;
+      SCB->VTOR = SLOTB_START_ADDRESS;
       __set_MSP(*(volatile uint32_t *)SLOTB_START_ADDRESS); 
+      // #ifdef DEBUG
+      // __HAL_DBGMCU_FREEZE_IWDG();  // don't let breakpoints trigger resets
+      // #endif
+      // MX_IWDG_Init(); 
       app_reset_handler();
-      }  
+    }  
   }
 }
 /* User button nucleo f103rb:

@@ -3,7 +3,7 @@
     "configurations": [
         {
             "cwd": "${workspaceFolder}",
-            "executable": "build/slotA/Application.elf",
+            "executable": "build/slotB/Application.elf",
             "name": "ST-Link",
             "request": "launch",
             "type": "cortex-debug",

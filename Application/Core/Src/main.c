@@ -21,8 +21,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "flash.h"
-#include "metadata.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -30,6 +28,7 @@
 #ifdef DEBUG
 #include "printf-stdarg.c"
 #endif
+#include "startup_confirm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +48,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+// IWDG_HandleTypeDef hiwdg;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -59,6 +60,7 @@ const uint8_t App_Version[2] = { APP_VERSION_MAJOR, APP_VERSION_MINOR };
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+// static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 void Task_App_BlinkLED(void);
 #ifdef DEBUG
@@ -80,8 +82,8 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
   volatile uint32_t vtor = SCB->VTOR;
-//   SCB->VTOR = 0x08006000U; // slot a
-//  SCB->VTOR = 0x08012000; // slot b
+  //  SCB->VTOR = 0x08006000U; // slot a
+  //  SCB->VTOR = 0x08012000; // slot b
 
   /* USER CODE END 1 */
 
@@ -105,21 +107,15 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  StartupConfirm(App_Version[0], App_Version[1]); // add after any checks
   DEBUG_PRINTF("Starting application (%d.%d)\n", App_Version[0], App_Version[1]);
-  // signal to bootloader that this boot was successful
-  // write 0 to boot_count in metadata
-  Metadata meta;
-  Metadata_Load(&meta);
-  meta.bootcount = 0;
-  // meta.FW_VER_MAJOR = APP_VERSION_MAJOR; // todo important don't know if I need it
-  // meta.FW_VER_MINOR = APP_VERSION_MINOR; 
-  Metadata_Save(&meta);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // HAL_IWDG_Refresh(&hiwdg);
     Task_App_BlinkLED();
     /* USER CODE END WHILE */
 
@@ -140,9 +136,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  // RCC_OscInitStruct.LSIState = RCC_LSI_ON; // for iwdg
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
@@ -165,6 +162,34 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 }
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+// static void MX_IWDG_Init(void)
+// {
+
+//   /* USER CODE BEGIN IWDG_Init 0 */
+
+//   /* USER CODE END IWDG_Init 0 */
+
+//   /* USER CODE BEGIN IWDG_Init 1 */
+
+//   /* USER CODE END IWDG_Init 1 */
+//   hiwdg.Instance = IWDG;
+//   hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
+//   hiwdg.Init.Reload = 4095;
+//   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+//   {
+//     Error_Handler();
+//   }
+//   /* USER CODE BEGIN IWDG_Init 2 */
+
+//   /* USER CODE END IWDG_Init 2 */
+
+// }
 
 /**
   * @brief USART2 Initialization Function
@@ -245,9 +270,9 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void Task_App_BlinkLED(void) {
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-  HAL_Delay(1000); // 100ms sec delay, tested with 100ms delay for slot b and 1sec delay for slot A
+  HAL_Delay(500);
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-  HAL_Delay(1000);
+  HAL_Delay(500);
 }
 
 #ifdef DEBUG
