@@ -47,3 +47,8 @@
 - Diagnostics
 - Modules will be removable/configurable: CRC32, AES128 Encryption, SHA256 Hashing, EDCSA, and EDCSA Curve Selection
 - Zephyr Integration for Bootloader + App
+
+# Rational:
+Although other more sophisticated BLs exist it is of my understanding that using them without Zephyr is moderate to high effort. While they are usually OS-agnostic, Zephyr provides built-in tools (like Kconfig and partition management) that handle much of the heavy lifting. Without these, you must manually implement the underlying hardware and software requirements. **I aim to remove that porting effort for STM32 MCUs.**
+
+In addition, these heavy duty BLs typically take a little over 32 kB of flash memory depending on hardware, feature configurations, and chosen cryptographic libraries. **I also aim to keep mine lightweight (under 24 kB)** :) .
