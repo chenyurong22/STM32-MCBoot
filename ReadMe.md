@@ -32,10 +32,12 @@
 | RAM            | 3144 B    | 20 KB        |  15.35%  |   
 | FLASH          |  17556 B  | 24 KB        |  71.44%  |
 
-## Using 3rd party repositories:
+## Using 3rd party repositories/libraries:
 1. https://github.com/kokke/tiny-AES-c
 2. https://github.com/kmackay/micro-ecc
 3. https://github.com/B-Con/crypto-algorithms
+4. printf-stdarg.c : Copyright 2001, 2002 Georges Menie (www.menie.org)
+   stdarg version contributed by Christian Ettinger
 
 # Planned features:
 - Immutable Trust Chain for Secure Boot ?? 
