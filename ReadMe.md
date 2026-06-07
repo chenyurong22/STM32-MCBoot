@@ -38,6 +38,7 @@
 3. https://github.com/B-Con/crypto-algorithms
 
 # Planned features:
+- Immutable Trust Chain for Secure Boot ?? 
 - Updates over OTA (esp32) as well
 - Supports: STM32 F1, G4, H7, U5 MCUs
 - CI/CD pipeline (Jenkins) or Github Actions
