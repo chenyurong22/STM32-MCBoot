@@ -13,7 +13,7 @@ import argparse
 # BAUDRATE   = 115200
 CHUNK_SIZE = 1024
 
-BASE = Path("../Application/build")
+BASE = Path("../app/build")
 
 SLOT_PATHS = {
     "A": BASE / "slotA" / "Application.bin",

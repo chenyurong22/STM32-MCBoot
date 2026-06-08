@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "Tools"
+cd "scripts"
 
 python3 -m venv venv
 source venv/bin/activate

@@ -5,12 +5,11 @@
  */
 
 /* Features */
-/** @todo INCLUDES.H ADDITION */
-/** @todo TEST IWDG AND COMMIT */
+/** @todo Make modules removable/configurable: CRC32, AES128 Encryption, SHA256 Hashing, EDCSA, and EDCSA Curve Selection */
 /** @todo After power loss resume write feature using bytes_written */
 /** @todo implement PAL functions needed before jumping to app */
-/** @todo test goto_application function */
-/** @todo Make modules removable/configurable: CRC32, AES128 Encryption, SHA256 Hashing, EDCSA, and EDCSA Curve Selection */
+/** @todo TEST IWDG AND COMMIT then test rollback*/
+/** @todo INCLUDES.H ADDITION */
 
 /* Learning */
 /** @todo CALCULATE ACCUMULATE ALGO */

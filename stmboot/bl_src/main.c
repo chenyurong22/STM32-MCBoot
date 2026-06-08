@@ -109,44 +109,6 @@ void Task_BL_BlinkLED(void) {
   PAL_Delay(1000); 
 }
 
-/** @todo TEST IWDG AND COMMIT */
-// static void goto_application(Metadata *meta) {
-//   if (meta->SLOTA_LATEST) {
-//     if ((*(volatile uint32_t *)SLOTA_START_ADDRESS) == 0xFFFFFFFF) {
-//       BL_LOG("No app found, staying in bootloader...\r\n");
-//       return;
-//     } else {
-//       BL_LOG("Jumping to application...\r\n");
-//       PAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-//       void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (SLOTA_START_ADDRESS + 4U));
-//       SCB->VTOR = SLOTA_START_ADDRESS;
-//       __set_MSP(*(volatile uint32_t *)SLOTA_START_ADDRESS); // used by CPU for exception handlers, HardFaults, SysTick, UART interrupts, any ISR. psp = application thread code
-//       // #ifdef DEBUG
-//       // PAL_FREEZE_IWDG();  // don't let breakpoints trigger resets
-//       // #endif
-//       // PAL_MX_IWDG_Init();
-//       app_reset_handler(); // call function pointer 
-//     }
-//   } else {
-//     if ((*(volatile uint32_t *)SLOTB_START_ADDRESS) == 0xFFFFFFFF) {
-//       BL_LOG("No app found, staying in bootloader...\r\n");
-//       return;
-//     } else {
-//       BL_LOG("Jumping to application...\r\n");
-//       PAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-//       void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (SLOTB_START_ADDRESS + 4U));
-//       SCB->VTOR = SLOTB_START_ADDRESS;
-//       __set_MSP(*(volatile uint32_t *)SLOTB_START_ADDRESS); 
-//       // #ifdef DEBUG
-//       // PAL_FREEZE_IWDG();
-//       // #endif
-//       // PAL_MX_IWDG_Init(); 
-//       app_reset_handler();
-//     }  
-//   }
-// }
-
-/** @todo test goto_application function */
 static void goto_application(Metadata *meta) {
   uint32_t boot_addr = meta->SLOTA_LATEST ? SLOTA_START_ADDRESS : SLOTB_START_ADDRESS; 
   if ((*(volatile uint32_t *)boot_addr) == 0xFFFFFFFF) {
