@@ -1,24 +1,15 @@
-# STMBoot — Secure Bootloader for STM32
+# stmboot — Secure Bootloader for STM32
 
 A lightweight, hardware-agnostic secure bootloader for STM32 microcontrollers featuring dual-slot A/B firmware updates, cryptographic verification, AES-128 encryption.
 
 > As of now I have only implemented the PAL layers on STM32F103RB therefore all the testing ONLY been conducted on F1 (later versions may include native support for other MCUs although the architecture has been planned as to keep the bootloader hardware agnostic to the STM32 family).
 
 ## Current State
-### Flash Memory Layout STM32F103RB
-|            | Start Address | Size  | End Address |
-|------------|---------------|-------|--------------|
-| Bootloader | 0x08000000    | 24 KB | 0x08006000   |
-| Slot A     | 0x08006000    | 48 KB | 0x08012000   |
-| Slot B     | 0x08012000    | 48 KB | 0x0801E000   |
-| Metadata 1 | 0x0801E000    | 4 KB  | 0x0801F000U  |
-| Metadata 2 | 0x0801F000U   | 4 KB  | 0x08020000   |
-
-### Debug Build
+### Release Build
 | Memory Region  | Used Size | Region Size | Usage % |
 |----------------|-----------|--------------|---------|
-| RAM            | 3144 B    | 20 KB        |  15.35%  |   
-| FLASH          |  17556 B  | 24 KB        |  71.44%  |
+| RAM            | 3128 B   | 20 KB        |  15.27%  |   
+| FLASH          |  12648 B  | 24 KB        |  51.46%  |
 
 ## Rational:
 Although other more sophisticated BLs exist it is of my understanding that using them without Zephyr is moderate to high effort. While they are usually OS-agnostic, Zephyr provides built-in tools (like Kconfig and partition management) that handle much of the heavy lifting. Without these, you must manually implement the underlying hardware and software requirements. **I aim to remove that porting effort for STM32 MCUs.**
@@ -31,7 +22,6 @@ In addition, these heavy duty BLs typically take a little over 32 kB of flash me
 - [Overview](#overview)
 - [Planned Updates](#tbd-features)
 - [Architecture](#architecture)
-  - [CMake Board Selection](#cmake-board-selection)
 - [Memory Layout](#memory-layout)
 - [Dual-Slot A/B Update Scheme](#dual-slot-ab-update-scheme)
 - [UART Firmware Update Protocol](#uart-firmware-update-protocol)
@@ -54,7 +44,7 @@ In addition, these heavy duty BLs typically take a little over 32 kB of flash me
 
 ## Overview
 
-STMBoot is a 24KB secure bootloader that sits at the start of STM32 flash memory. On every reset it validates metadata, advances the image state machine, optionally enters UART update mode, and jumps to the verified application. Firmware images are signed with ECDSA P-256, encrypted with AES-128 CTR, and integrity-checked with hardware CRC32 before a single byte is written to flash.
+stmboot is a 24KB bootloader that sits at the start of STM32 flash memory. Moreover, it is an educational project and aims to provide minimal secure boot. 
 
 | Property | Value |
 |----------|-------|
@@ -63,32 +53,37 @@ STMBoot is a 24KB secure bootloader that sits at the start of STM32 flash memory
 | Update transport | UART at 115200 baud |
 | Signature algorithm | ECDSA P-256 over SHA-256 |
 | Encryption | AES-128 CTR with random IV per update |
-| Integrity check | STM32 hardware CRC32 |
+| Integrity check | STM32 hardware CRC32 + Dual metadata slots with CRC check |
 | Rollback protection | Boot counter + firmware version check |
-| Power loss resistance | Dual metadata + bytes_written tracking |
+| Power loss resistance | Power loss handling while writing or erasing flash |
 
 ---
 
 ## TBD Features
 in order of priority:
+- If CRC section in Metadata is tampered with, the faulty metadata might be validated.
 - Modules will be made removable/configurable: CRC32, AES128 Encryption, SHA256 Hashing, EDCSA, and EDCSA Curve Selection
-- Power loss write resuming
 - Immutable Trust Chain
   - Two-stage boot (OEMiRoT + uRoT equivalent)
   - Bootloader self-update (wolfBoot equivalent)
+  - Memory Protection Unit (MPU) integration
 - Github Actions: Tests in GTest
   - Feature unit tests
   - Static tests: cppcheck, clang-tidy
 - Flash wear resistance (Wear levelling)
 - Shell
 - Settings KV store and Logging framework
-- Diagnostics
+- Diagnostics at boot (ram integrity check, peripheral detection, flash wear?) 
+  - Diagnostics recorded into protected memory after failure
+- Rollback: Delta History ? 
+- Self-Documenting Hardware
+  - @ boot, the device exposes itself as a USB drive containing schematics, datasheets, API docs, service manuals
 - Zephyr Integration for Bootloader + App 
 - ESP32 OTA updates
 
 ## Architecture
 
-STMBoot separates concerns into four distinct layers. bootutil and application logic never include HAL headers directly and all hardware access goes through the Platform Abstraction Layer (PAL). Adding support for a new STM32 family requires only a new `platform/stm32/<family>/` folder and a new board entry in CMake.
+stmboot separates concerns into four distinct layers. bootutil and boot logic never include HAL headers directly and all hardware access goes through the Platform Abstraction Layer (PAL). Adding support for a new STM32 family requires only a new `platform/stm32/<family>/` folder and a new board entry in CMake.
 
 ```
 stmboot/
@@ -104,7 +99,7 @@ stmboot/
 │              & drivers for boards               │
 |   gcc-arm-none-eabi.cmake                       |
 ├─────────────────────────────────────────────────┤
-│           bootutil/ (PAL calls only)          │
+│           bootutil/ (PAL calls only)            │
 │        crypto/          │       fwupdate/       │
 | aes_ctr - has AES key   │    metadata.c         │
 | ECDSA P-256 public key  │    uart_reception.c   │
@@ -126,17 +121,6 @@ stmboot/
 └─────────────────────────────────────────────────┘
 ```
 
-
-### CMake board selection
-
-```bash
-cmake -B build -DBOARD=f103rb -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake
-cmake -B build -DBOARD=g474re  # when G4 support is added
-cmake -B build -DBOARD=h743zi  # when H7 support is added
-```
-
-Each board file (`cmake/boards/f103rb.cmake`) defines sources, includes, defines, and the linker script. `app/` and `bootutil/` are identical across all boards.
-
 ---
 
 ## Memory Layout
@@ -145,22 +129,19 @@ Each board file (`cmake/boards/f103rb.cmake`) defines sources, includes, defines
 STM32F103RB — 128KB Flash
 ─────────────────────────────────────────────────────
 0x08000000  ┌─────────────────────────────────────┐
-            │         Bootloader (24KB)            │
-            │         STMBoot — never updated      │
+            │         Bootloader (24KB)           │
 0x08006000  ├─────────────────────────────────────┤
-            │           Slot A  (48KB)             │
-            │        Primary application slot      │
+            │           Slot A  (48KB)            │
+            │        Primary application slot     │
 0x08012000  ├─────────────────────────────────────┤
-            │           Slot B  (48KB)             │
-            │          Staging slot                │
+            │           Slot B  (48KB)            │
+            │        Secondary application slot   │
 0x0801E000  ├─────────────────────────────────────┤
             │         Metadata  (8KB)              │
-            │  Dual-copy: magic, state, version,   │
+0x0801F000  │  Dual-copy: magic, state, version,   │
             │  boot counter, IV, CRC, sequence     │
 0x08020000  └─────────────────────────────────────┘
 ```
-
-Slot A and Slot B alternate as the active slot on each update. The bootloader always jumps to whichever slot `metadata.SLOTA_LATEST` points to.
 
 ---
 
@@ -201,30 +182,30 @@ MCU                              Python
  │                                  │
  │──── "READY\r\n" ────────────────►│  MCU enters update mode
  │                                  │
- │◄─── [0xAA 0xBB MAJOR MINOR] ────│  Python sends 4-byte header
+ │◄─── [0xAA 0xBB MAJOR MINOR] ─────│  Python sends 4-byte header
  │                                  │
- │──── "A\r\n" or "B\r\n" ────────►│  MCU reports which slot it will program
- │──── "ACK\r\n" ─────────────────►│  header accepted, version approved
+ │──── "A\r\n" or "B\r\n" ─────────►│  MCU reports which slot it will program
+ │──── "ACK\r\n" ──────────────────►│  header accepted, version approved
  │                                  │
- │◄─── IV [16 bytes] ──────────────│  random IV for AES-128 CTR
- │──── "ACK\r\n" ─────────────────►│
+ │◄─── IV [16 bytes] ───────────────│  random IV for AES-128 CTR
+ │──── "ACK\r\n"─ ─────────────────►│
  │                                  │
- │◄─── SIZE [4 bytes LE] ──────────│  total firmware size
- │──── "ACK\r\n" ─────────────────►│
+ │◄─── SIZE [4 bytes LE] ───────────│  total firmware size
+ │──── "ACK\r\n"─ ─────────────────►│
  │                                  │
- │◄─── CHUNK [1024 bytes] ─────────│  ─┐
+ │◄─── CHUNK [1024 bytes] ──────────│  ─┐
  │  decrypt → CRC accumulate        │   │  repeated until all
  │  → write to flash                │   │  data transferred
- │──── "ACK\r\n" ─────────────────►│  ─┘
+ │──── "ACK\r\n"─ ─────────────────►│  ─┘
  │                                  │
- │──── "ACK\r\n" ─────────────────►│  all chunks received
+ │──── "ACK\r\n" ──────────────────►│  all chunks received
  │                                  │
- │◄─── CRC [4 bytes LE] ───────────│  CRC32 over signed plaintext
+ │◄─── CRC [4 bytes LE] ────────────│  CRC32 over signed plaintext
  │  verify CRC                      │
  │  verify ECDSA signature          │
- │──── "ACK\r\n" ─────────────────►│  CRC + signature verified
+ │──── "ACK\r\n" ──────────────────►│  CRC + signature verified
  │                                  │
- │──── "OK\r\n" ──────────────────►│  update complete, rebooting
+ │──── "OK\r\n" ───────────────────►│  update complete, rebooting
 ```
 
 ### Python tool usage
@@ -309,35 +290,48 @@ Padding:     data padded to 4-byte boundary with 0xFF
 **IWDG runtime check:** If the application fails to pet the IWDG watchdog, the MCU resets. On next boot, `system_init.c` detects the IWDG reset flag in `RCC->CSR`. Each IWDG reset increments `metadata.runtime_fault_count`. If `runtime_fault_count > RUNTIME_FAULT_MAX`, rollback is triggered.
 
 ### Power Loss Resistance
-
-**Dual metadata slots:** Two copies of the `Metadata` struct are maintained with a monotonically increasing `sequence` counter. `Metadata_Save` always writes to the copy with the lower sequence number. `Metadata_Load` uses the copy with the higher sequence number that has a valid magic and CRC. One copy is always valid even if the write of the other is interrupted mid-erase.
-
-**`bytes_written` tracking:** The `bytes_written` field in metadata is updated after each successful 1KB chunk write. On power loss mid-flash:
-
-```
-Boot → Metadata_Load → bytes_written < fw_size → incomplete write detected
-     → erase staging slot → re-enter update mode → wait for retransmission
-```
-
+Three primary cases exist:
+1. Window 1 (power during erase):
+  IDLE → ERASING → [power lost]
+    On next boot: detect ERASING → re-erase → reset to IDLE → RESUME_RESTART
+1. Window 2 (power during write):
+  ERASING → IN_PROGRESS → [power lost at chunk N]
+    On next boot: detect IN_PROGRESS → re-erase → reset to IDLE → send RESUME_RESTART
+1. Window 3 (power during Metadata_Save):
+  **Dual metadata slots:** Two copies of the `Metadata` struct are maintained with a monotonically increasing `sequence` counter. `Metadata_Save` always writes to the copy with the lower sequence number. `Metadata_Load` uses the copy with the higher sequence number that has a valid magic and CRC. One copy is always valid even if the write of the other is interrupted mid-erase.
+1. Power loss during CRC/ECDSA verification (TO BE IMPLEMENTED):
+  COMPLETE → [power lost]
+  On next boot: detect COMPLETE → re-verify from flash → 
+    if passes: set PENDING, IDLE
+    if fails:  re-erase, reset to IDLE, send RESUME_RESTART
 ---
 
 ### Metadata struct
 
 ```c
 typedef struct __attribute__((packed)) {
-    uint32_t magic;               // METADATA_MAGIC — validates struct
-    uint32_t SLOTA_LATEST;        // 1 = slot A active, 0 = slot B active
-    uint32_t bootcount;           // incremented each TRIAL boot
-    uint8_t  FW_VER_MAJOR;        // running firmware major version
-    uint8_t  FW_VER_MINOR;        // running firmware minor version
+    uint32_t magic;
+    uint32_t SLOTA_LATEST;
+    uint32_t bootcount; // increment every boot, clear by successful firmware
+    uint8_t  FW_VER_MAJOR;
+    uint8_t  FW_VER_MINOR;
     uint16_t _pad;
-    uint32_t image_state;         // ImageState enum value
-    uint32_t runtime_fault_count; // IWDG resets since last confirmation
-    uint32_t sequence;            // monotonically increasing — newer = higher
-    uint32_t bytes_written;       // tracks partial writes for power loss recovery
-    uint32_t fw_size;             // total expected firmware size
-    uint8_t  iv[16];              // AES-128 CTR IV used for this image
+    uint32_t image_state;
+    uint32_t runtime_fault_count;
+    uint32_t sequence; // monotonically increasing — higher = newer
+    uint8_t iv[16];
+    uint32_t write_state;
+    uint32_t crc; 
 } Metadata;
+```
+The write states are as follows: 
+```c
+typedef enum {
+    WRITE_STATE_IDLE = 0x0, // no writing in prog
+    WRITE_STATE_ERASING = 0x1, // erase started not completed
+    WRITE_STATE_WRITING = 0x2, // write started not completed
+    WRITE_STATE_COMPLETE = 0x3, // all bytes written
+} WriteState;
 ```
 
 #### Deterministic Metadata Image State State Machine
@@ -382,9 +376,24 @@ flowchart TD
     IWDG_CHECK -->|no| LOAD
     INCREMENT --> LOAD
 
-    LOAD[Metadata_Load\nvalidate magic + CRC] --> STATE[update_image_state]
+    LOAD[Metadata_Load\nvalidate magic + CRC] --> WRITE_STATE_CHECK{write_state\n!= IDLE?}
 
-    STATE --> NONE_CHECK{image_state\n== NONE?}
+    WRITE_STATE_CHECK -->|yes| INTERRUPTED[check_interrupted_write]
+    WRITE_STATE_CHECK -->|no| STATE
+
+    INTERRUPTED --> ERASE_CHECK{write_state ==\nERASING or\nIN_PROGRESS?}
+    ERASE_CHECK -->|yes| RE_ERASE[Re-erase staging slot\nwrite_state = IDLE\n = 0\nMetadata_Save]
+    RE_ERASE --> SEND_RESTART[Send RESUME_RESTART\nPython retransmits from byte 0]
+    SEND_RESTART --> STATE
+
+    ERASE_CHECK -->|no, COMPLETE| RE_VERIFY{ECDSA verify\nfrom flash?}
+    RE_VERIFY -->|pass| MARK_PENDING[image_state = PENDING\nwrite_state = IDLE\nflip SLOTA_LATEST\nMetadata_Save]
+    MARK_PENDING --> STATE
+    RE_VERIFY -->|fail| RE_ERASE2[Re-erase staging slot\nwrite_state = IDLE\nMetadata_Save]
+    RE_ERASE2 --> SEND_RESTART2[Send RESUME_RESTART]
+    SEND_RESTART2 --> STATE
+
+    STATE[update_image_state] --> NONE_CHECK{image_state\n== NONE?}
     NONE_CHECK -->|yes| UPDATE_CHECK
     NONE_CHECK -->|no| PENDING_CHECK
 
@@ -409,19 +418,24 @@ flowchart TD
 
     UPDATE_CHECK[check_for_update\n5-second B1 window] --> BTN{Button\npressed?}
 
-    BTN -->|yes| READY[Send READY\nReceive IV\nReceive SIZE]
+    BTN -->|yes| READY[Send READY\nAwait header + FW version]
     READY --> VERSION{New version >\ncurrent version?}
-    VERSION -->|no| NACK_VER[NACK — version\nrejected]
+    VERSION -->|no| NACK_VER[NACK — version rejected]
     NACK_VER --> GOTO_APP
-    VERSION -->|yes| ERASE[Erase staging slot]
-    ERASE --> RECV[Receive chunks\nDecrypt AES-128 CTR\nAccumulate HW CRC32\nWrite to flash]
-    RECV --> CRC_OK{CRC32\nmatches?}
-    CRC_OK -->|no| NACK_CRC[NACK — erase\nstaging slot]
+    VERSION -->|yes| SET_ERASING[write_state = ERASING\n = total_len\nMetadata_Save]
+    SET_ERASING --> ERASE[Erase staging slot]
+    ERASE --> SET_INPROGRESS[write_state = IN_PROGRESS\nMetadata_Save]
+    SET_INPROGRESS --> RECV_IV[Receive IV\nstore in meta->iv\nMetadata_Save\nACK]
+    RECV_IV --> RECV_SIZE[Receive SIZE\nACK]
+    RECV_SIZE --> RECV[Receive chunks\nDecrypt AES-128 CTR\nAccumulate HW CRC32\nWrite to flash\n\nACK per chunk]
+    RECV --> SET_COMPLETE[write_state = COMPLETE\nMetadata_Save]
+    SET_COMPLETE --> CRC_OK{CRC32\nmatches?}
+    CRC_OK -->|no| NACK_CRC[NACK — erase staging slot\nwrite_state = IDLE\nMetadata_Save]
     NACK_CRC --> GOTO_APP
     CRC_OK -->|yes| ECDSA{ECDSA P-256\nverified?}
-    ECDSA -->|no| NACK_SIG[NACK — erase\nstaging slot]
+    ECDSA -->|no| NACK_SIG[NACK — erase staging slot\nwrite_state = IDLE\nMetadata_Save]
     NACK_SIG --> GOTO_APP
-    ECDSA -->|yes| META_UPDATE[Metadata_UpdateAfterReceive\nPENDING + flip slot\nstore IV + fw_size]
+    ECDSA -->|yes| META_UPDATE[Metadata_UpdateAfterReceive\nimage_state = PENDING\nwrite_state = IDLE\nflip SLOTA_LATEST\nstore IV + \nMetadata_Save]
     META_UPDATE --> OK[Send OK\nSystemReset]
 
     BTN -->|no, timeout| GOTO_APP

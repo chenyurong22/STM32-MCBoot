@@ -36,23 +36,10 @@ static uintptr_t return_Inactive_Metadata_Address() {
 
 PAL_Flash_StatusTypeDef Metadata_Load(Metadata *m) {
     Metadata *stored = (Metadata *)return_Active_Metadata_Address(); // casting to Treat the bytes at memory address METADATA_ADDRESS as if they were a Metadata struct
-    if (stored->magic == METADATA_MAGIC) {
-        if (compute_metadata_crc(stored) == stored->crc) {
-            *m = *stored; // valid metadata found
-            return FLASH_OK;
-        } else { // todo redundant code remove
-            m->magic = METADATA_MAGIC;
-            m->SLOTA_LATEST = true;
-            m->bootcount = 0;
-            m->runtime_fault_count = 0;
-            m->FW_VER_MAJOR = 0x0;
-            m->FW_VER_MINOR = 0x0;
-            m->image_state = IMG_STATE_NONE;
-            m->sequence = 1;
-            m->crc = compute_metadata_crc(m);
-            return Metadata_Save(m); 
-        }
-    } else { // first boot ever, set defaults
+    if ((stored->magic == METADATA_MAGIC) && (compute_metadata_crc(stored) == stored->crc)) {
+        *m = *stored; // valid metadata found
+        return FLASH_OK;
+    } else { // first boot ever or metadata is corrupted, set defaults
         m->magic = METADATA_MAGIC;
         m->SLOTA_LATEST = true;
         m->bootcount = 0;
