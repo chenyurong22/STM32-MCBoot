@@ -74,7 +74,7 @@ in order of priority:
 - Flash wear resistance (Wear levelling)
 - Shell
 - Settings KV store and Logging framework
-- Diagnostics at boot (ram integrity check, peripheral detection, flash wear?) 
+- Diagnostics at boot (ram integrity check, peripheral detection, flash wear?)
   - Diagnostics recorded into protected memory after failure
 - Rollback: Delta History ? 
 - Self-Documenting Hardware
@@ -456,10 +456,9 @@ flowchart TD
 
 ---
 ## Testing
-Using [Fake-Function-Framework-(fff)](https://github.com/meekrosoft/fff). 
-!! todo
+!! todo further
 - Github Actions: Tests in GTest
-  - Feature unit tests
+  - File unit tests: Ceedling - CMock
   - Static tests: cppcheck, clang-tidy
 ---
 ## Third-Party Libraries
@@ -469,7 +468,7 @@ Using [Fake-Function-Framework-(fff)](https://github.com/meekrosoft/fff).
 | [tiny-AES-c](https://github.com/kokke/tiny-AES-c) | Latest | AES-128 CTR encryption/decryption | Unlicense |
 | [micro-ecc](https://github.com/kmackay/micro-ecc) | Latest | ECDSA P-256 signing and verification | BSD 2-Clause |
 | [crypto-algorithms](https://github.com/B-Con/crypto-algorithms) | Latest | SHA-256 digest computation | Public Domain |
-| [Fake-Function-Framework-(fff)](https://github.com/meekrosoft/fff) | Latest | micro-framework for creating fake C functions for tests | MIT License |
+| [Ceedling](https://github.com/throwtheswitch/ceedling) | Latest | Unit testing and build system for C projectss | MIT License |
 | printf-stdarg.c | — | Lightweight printf for embedded | LGPL — Copyright 2001, 2002 Georges Menie (www.menie.org), stdarg version contributed by Christian Ettinger |
 | STM32F1xx HAL | CubeMX generated | STM32F1 peripheral drivers | BSD 3-Clause |
 | CMSIS | ARM | Cortex-M3 core support | Apache 2.0 |

@@ -54,7 +54,7 @@ add_custom_target(clang-tidy
         -p ${CMAKE_BINARY_DIR}
         ${ANALYSIS_SOURCES}
         --checks=${CLANG_TIDY_CHECKS}
-        --warnings-as-errors=bugprone-*,cert-*
+        --warnings-as-errors=bugprone-*,cert-*,-clang-diagnostic-*
         -export-fixes=tests/static/clang-tidy-fixes.yaml
         --
         -std=c11
@@ -67,4 +67,14 @@ add_custom_target(clang-tidy
 add_custom_target(static-analysis
     DEPENDS cppcheck clang-tidy
     COMMENT "Static analysis complete"
+)
+
+add_custom_target(unit_tests
+    COMMAND ceedling test:all
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests/unit
+)
+
+add_custom_target(all_tests
+    DEPENDS static-analysis unit_tests
+    COMMENT "Running static analysis and unit tests"
 )

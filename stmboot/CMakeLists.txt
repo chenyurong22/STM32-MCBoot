@@ -51,6 +51,11 @@ if(STATIC_ANALYSIS)
     return()  # skip all firmware targets below this point
 endif()
 
+if(UNIT_TESTS)
+    message(STATUS "Unit test mode — no firmware target built")
+    include(tests/CMakeLists.txt)
+    return()  # skip all firmware targets below this point
+endif()
 # ── target ───────────────────────────────────────────────────────
 add_executable(Bootloader
     ${BOARD_SOURCES}

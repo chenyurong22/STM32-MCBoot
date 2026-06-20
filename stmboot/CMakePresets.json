@@ -83,6 +83,29 @@
                 "STATIC_ANALYSIS": "ON",
                 "BOARD": "f103rb"
             }
+        },
+        {
+            "name": "unit-tests",
+            "displayName": "Unit Tests - Ceedling",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/unit-tests",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "UNIT_TESTS": "ON",
+                "BOARD": "f103rb"
+            }
+        },
+                {
+            "name": "all-tests",
+            "displayName": "All Tests",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/all-tests",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "UNIT_TESTS": "ON",
+                "STATIC_ANALYSIS": "ON", 
+                "BOARD": "f103rb"
+            }
         }
     ],
     "buildPresets": [
@@ -110,10 +133,20 @@
             "name": "h743zi-release",
             "configurePreset": "h743zi-release"
         },
-            {
+        {
             "name": "static-analysis-all",
             "configurePreset": "static-analysis",
             "targets": ["static-analysis"]
-            }
+        },
+        {
+            "name": "unit-tests",
+            "configurePreset": "unit-tests",
+            "targets": ["unit_tests"]
+        },
+                {
+            "name": "all-tests",
+            "configurePreset": "all-tests",
+            "targets": ["all_tests"]
+        }
     ]
 }

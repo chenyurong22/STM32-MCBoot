@@ -25,10 +25,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''meta'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      29
+      FileOffset:      68
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          20
+          Offset:          59
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -37,10 +37,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''hcrc'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      87
+      FileOffset:      126
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          69
+          Offset:          108
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -49,10 +49,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''huart2'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      182
+      FileOffset:      221
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          163
+          Offset:          202
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -61,10 +61,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''hdma_usart2_rx'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      209
+      FileOffset:      248
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          191
+          Offset:          230
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -73,10 +73,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''hdma_usart2_tx'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      244
+      FileOffset:      283
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          226
+          Offset:          265
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -85,10 +85,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''header_buf'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      271
+      FileOffset:      310
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          263
+          Offset:          302
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -97,10 +97,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''BL_Version'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      361
+      FileOffset:      400
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          347
+          Offset:          386
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -109,10 +109,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable ''AUTOMATIC_UPDATE'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      426
+      FileOffset:      465
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          418
+          Offset:          457
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -121,10 +121,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'no header providing "BL_LOG_LEVEL" is directly included'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      453
+      FileOffset:      492
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          20
+          Offset:          59
           Length:          0
           ReplacementText: "#include \"logging.h\"\n"
     Level:           Warning
@@ -133,7 +133,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'no header providing "BL_LOG_PRINTF" is directly included'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      469
+      FileOffset:      508
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -141,10 +141,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'function ''Rollback_Check'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      597
+      FileOffset:      636
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          593
+          Offset:          632
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -153,7 +153,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      622
+      FileOffset:      661
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -161,10 +161,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'pointer parameter ''m'' can be pointer to const'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      622
+      FileOffset:      661
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          612
+          Offset:          651
           Length:          0
           ReplacementText: 'const '
     Level:           Warning
@@ -173,14 +173,14 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      719
+      FileOffset:      758
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          719
+          Offset:          758
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          729
+          Offset:          768
           Length:          0
           ReplacementText: "\n}"
     Level:           Warning
@@ -189,10 +189,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'function ''update_image_state'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      904
+      FileOffset:      943
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          899
+          Offset:          938
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -201,7 +201,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      933
+      FileOffset:      972
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -209,18 +209,18 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'no header providing "BL_LOG" is directly included'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      1272
+      FileOffset:      1311
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
   - DiagnosticName:  misc-use-internal-linkage
     DiagnosticMessage:
-      Message:         'function ''check_prev_write'' can be made static to enforce internal linkage'
+      Message:         'function ''check_interrupted_write'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      2088
+      FileOffset:      2127
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          2083
+          Offset:          2122
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -229,7 +229,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      2115
+      FileOffset:      2161
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -237,19 +237,19 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'do not use ''else'' after ''return'''
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      3572
+      FileOffset:      5566
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          3572
+          Offset:          5566
           Length:          5
           ReplacementText: ''
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          3577
+          Offset:          5571
           Length:          1063
           ReplacementText: "\n    BL_LOG(\"Jumping to application...\\r\\n\");\r\n    PAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);\r\n    void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (boot_addr + 4U));\r\n    /** @todo implement PAL functions needed before jumping to app */\r\n    /*\r\n    HAL_DeInit();        // de-init peripherals + mask SysTick IRQ\r\n    SysTick->CTRL = 0;  // fully stop the counter itself\r\n    __disable_irq(); // EXTI interrupt enabled (blue button, EXTI15_10_IRQn). If fired during/after jump, before app sets up SCB->VTOR, will call the bootloader's ISR handler — which no longer has a valid stack context\r\n    */\r\n    SCB->VTOR = boot_addr;\r\n    __set_MSP(*(volatile uint32_t *)boot_addr); // used by CPU for exception handlers, HardFaults, SysTick, UART interrupts, any ISR. psp = application thread code\r\n    /** @todo TEST IWDG AND COMMIT */\r\n    /*\r\n    #ifdef DEBUG\r\n    PAL_FREEZE_IWDG();  // don't let breakpoints trigger resets\r\n    #endif\r\n    PAL_MX_IWDG_Init();\r\n    */\r\n    app_reset_handler(); // call function pointer \r\n "
       Ranges:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          FileOffset:      3572
+          FileOffset:      5566
           Length:          4
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -257,14 +257,14 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      5505
+      FileOffset:      7660
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          5505
+          Offset:          7660
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          5549
+          Offset:          7705
           Length:          0
           ReplacementText: "\n}"
     Level:           Warning
@@ -482,10 +482,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'function ''Metadata_Save'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-      FileOffset:      2009
+      FileOffset:      2109
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-          Offset:          1985
+          Offset:          2085
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -494,7 +494,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-      FileOffset:      2033
+      FileOffset:      2133
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -502,10 +502,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'function ''Metadata_IncrementBootCount'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-      FileOffset:      2473
+      FileOffset:      2715
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-          Offset:          2449
+          Offset:          2691
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -514,7 +514,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-      FileOffset:      2511
+      FileOffset:      2753
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -522,10 +522,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'function ''Metadata_UpdateAfterRecieve'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-      FileOffset:      2775
+      FileOffset:      3017
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-          Offset:          2751
+          Offset:          2993
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -534,7 +534,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-      FileOffset:      2813
+      FileOffset:      3055
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -542,10 +542,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'implicit conversion ''bool'' -> ''int'''
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-      FileOffset:      2996
+      FileOffset:      3238
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.c'
-          Offset:          2996
+          Offset:          3238
           Length:          0
           ReplacementText: '(int)'
     Level:           Warning
@@ -566,7 +566,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.h'
-      FileOffset:      1434
+      FileOffset:      1750
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -574,7 +574,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.h'
-      FileOffset:      1523
+      FileOffset:      1839
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -582,7 +582,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.h'
-      FileOffset:      1626
+      FileOffset:      1942
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -590,7 +590,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/metadata.h'
-      FileOffset:      1692
+      FileOffset:      2008
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -646,7 +646,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'no header providing "uint32_t" is directly included'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-      FileOffset:      1318
+      FileOffset:      1382
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -654,14 +654,14 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-      FileOffset:      1528
+      FileOffset:      1589
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          1528
+          Offset:          1589
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          1551
+          Offset:          1612
           Length:          0
           ReplacementText: "\n}"
     Level:           Warning
@@ -670,14 +670,14 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-      FileOffset:      1857
+      FileOffset:      1915
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          1857
+          Offset:          1915
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          1880
+          Offset:          1938
           Length:          0
           ReplacementText: "\n}"
     Level:           Warning
@@ -686,7 +686,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'variable name ''iv'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-      FileOffset:      2665
+      FileOffset:      2821
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -694,14 +694,14 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-      FileOffset:      3555
+      FileOffset:      3708
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          3555
+          Offset:          3708
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          3578
+          Offset:          3731
           Length:          0
           ReplacementText: "\n}"
     Level:           Warning
@@ -710,14 +710,14 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-      FileOffset:      4286
+      FileOffset:      4479
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          4286
+          Offset:          4479
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          4310
+          Offset:          4503
           Length:          0
           ReplacementText: "\n}"
     Level:           Warning
@@ -726,16 +726,28 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-      FileOffset:      4892
+      FileOffset:      5152
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          4892
+          Offset:          5152
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
-          Offset:          4915
+          Offset:          5175
           Length:          0
           ReplacementText: "\n}"
+    Level:           Warning
+    BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
+  - DiagnosticName:  readability-implicit-bool-conversion
+    DiagnosticMessage:
+      Message:         'implicit conversion ''int'' -> ''bool'''
+      FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
+      FileOffset:      5947
+      Replacements:
+        - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/bootutil/fwupdate/uart_reception.c'
+          Offset:          6022
+          Length:          0
+          ReplacementText: ' != 0'
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
   - DiagnosticName:  clang-diagnostic-error
