@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cd "scripts"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+cd "$SCRIPT_DIR/scripts"
 
 python3 -m venv venv
 source venv/bin/activate

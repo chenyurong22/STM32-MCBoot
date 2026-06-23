@@ -78,7 +78,7 @@ RECEP_STATUS UART_Receive(uint8_t* received_header, Metadata *meta) {
     
     AES_init_ctx_iv(&ctx, AES_KEY, meta->iv); // converts 16 byte key into 11 round keys of 16 bytes each
 
-    int chunk_count; 
+    // int chunk_count; 
 
     // meta->bl_state  = BL_STATE_WRITING;
     Metadata_Save(meta);
@@ -128,7 +128,7 @@ RECEP_STATUS UART_Receive(uint8_t* received_header, Metadata *meta) {
     for (int i = 0; i < 64; i++) {
         signature[i] = *(volatile uint8_t *)(sig_addr + i); 
     }
-    if (!Verify_Firmware((uint8_t *)which_slot_addr, total_len - 64U, signature)) {
+    if (!Verify_Firmware((uint8_t *)which_slot_addr, total_len - 64U, signature)) { // returns uECC_verify which return int 1 if signature valid and 0 if not
         send_nack();
         // meta->bl_state = BL_STATE_ERASING;
         Metadata_Save(meta);

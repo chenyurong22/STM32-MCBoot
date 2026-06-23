@@ -27,7 +27,7 @@ int uart_putchar(int c)
 
 int Rollback_Check(Metadata *m) {
   if (m->bootcount <= BOOT_COUNT_MAX || (m->runtime_fault_count <= RUNTIME_BOOT_COUNT_MAX)) return 0;
-  m->SLOTA_LATEST = !meta.SLOTA_LATEST; // flip to previous slot 
+  m->SLOTA_LATEST = !m->SLOTA_LATEST; // flip to previous slot 
   m->bootcount = 0;
   m->image_state = IMG_STATE_REVERTED;
   Metadata_Save(m); 
@@ -35,91 +35,92 @@ int Rollback_Check(Metadata *m) {
 }
 
 void update_image_state(Metadata *m) {
-  if (meta.image_state == IMG_STATE_PENDING) {
-    meta.image_state = IMG_STATE_TRIAL;
+  if (m->image_state == IMG_STATE_PENDING) {
+    m->image_state = IMG_STATE_TRIAL;
     // reset bootcount in Metadata_UpdateAfterRecieve
-    Metadata_Save(&meta);
-  } else if (meta.image_state == IMG_STATE_TRIAL) {
-    Metadata_IncrementBootCount(&meta); // increment before jumping
-    if (Rollback_Check(&meta)) {
+    Metadata_Save(m);
+  } else if (m->image_state == IMG_STATE_TRIAL) {
+    Metadata_IncrementBootCount(m); // increment before jumping
+    if (Rollback_Check(m)) {
       BL_LOG("Bootcount exceeded. Rolling back to previous version.");
     }
-  } else if (meta.image_state == IMG_STATE_HEALTHY) {
+  } else if (m->image_state == IMG_STATE_HEALTHY) {
     if (iwdg_reset) { // app failed to pet
-      meta.runtime_fault_count++; // 10 resets allowed
-      Metadata_Save(&meta);
+      m->runtime_fault_count++; // 10 resets allowed
+      Metadata_Save(m);
       BL_LOG("IWDG reset detected\r\n");
     }
-    if (Rollback_Check(&meta)) {
+    if (Rollback_Check(m)) {
       BL_LOG("Runtime faults exceeded. Rolling back to previous version.");
     }
-  } else if (meta.image_state == IMG_STATE_REVERTED) { /* @todo verify but cannot until IWDG is verified*/
+  } else if (m->image_state == IMG_STATE_REVERTED) { /* @todo verify but cannot until IWDG is verified*/
     // old slot is now running — treat it as healthy, reset fault counters
-    meta.image_state = IMG_STATE_HEALTHY;
-    meta.bootcount = 0;
-    meta.runtime_fault_count = 0;
-    Metadata_Save(&meta);
+    m->image_state = IMG_STATE_HEALTHY;
+    m->bootcount = 0;
+    m->runtime_fault_count = 0;
+    Metadata_Save(m);
     BL_LOG("Running reverted slot — marked healthy\r\n");
   }
 }
 
 void check_interrupted_write(Metadata *m) {
-  uint32_t slot_addr = meta.SLOTA_LATEST ? SLOTB_START_ADDRESS : SLOTA_START_ADDRESS;
+  uint32_t slot_addr = m->SLOTA_LATEST ? SLOTB_START_ADDRESS : SLOTA_START_ADDRESS;
 
-  if (meta.bl_state == BL_STATE_IDLE && meta.fwu_state == FWU_STATE_IDLE) { // normal boot
+  if (m->bl_state == BL_STATE_IDLE && m->fwu_state == FWU_STATE_IDLE) { // normal boot
     BL_LOG("No interrupted writes!\r\n");
     AUTOMATIC_UPDATE = 0; 
     return;
   }
 
-  if (meta.bl_state == BL_STATE_ERASING || meta.bl_state == BL_STATE_WRITING) { // power lost during erase or write
-    meta.bl_state = BL_STATE_ERASING;
-    Metadata_Save(&meta);
+  if (m->bl_state == BL_STATE_ERASING || m->bl_state == BL_STATE_WRITING) { // power lost during erase or write
+    BL_LOG("Power lost during Erase/Write\r\n");
+    m->bl_state = BL_STATE_ERASING;
+    Metadata_Save(m);
     PAL_Flash_EraseSlot(slot_addr, SLOT_NUM_PAGES);
-    meta.bl_state = BL_STATE_IDLE;
-    meta.fwu_state = FWU_STATE_IDLE;
-    Metadata_Save(&meta);
+    m->bl_state = BL_STATE_IDLE;
+    m->fwu_state = FWU_STATE_IDLE;
+    Metadata_Save(m);
     AUTOMATIC_UPDATE = 1;
     return;
   }
 
   // bl state idle but fwu state mid protocol
-  switch(meta.fwu_state) {
+  switch(m->fwu_state) {
     case FWU_STATE_START: // do nothing
       BL_LOG("FWU Interrupted @ state START - retrying...\r\n");
-      meta.fwu_state = FWU_STATE_IDLE;
+      m->fwu_state = FWU_STATE_IDLE;
       AUTOMATIC_UPDATE = 1; 
       break;
     case FWU_STATE_ERASEDSLOT: // slot erase but no fw written, fall through and do same as FWU_STATE_WRITECOMPLETE
     case FWU_STATE_WRITECOMPLETE: // chunks written but no crc so integretiy is not confirmed
       BL_LOG("FWU Interrupted @ state ERASEDSLOT or WRITECOMPLETE - retrying...\r\n");
       PAL_Flash_EraseSlot(slot_addr, SLOT_NUM_PAGES);
-      meta.fwu_state = FWU_STATE_IDLE;
-      Metadata_Save(&meta);
+      m->fwu_state = FWU_STATE_IDLE;
+      Metadata_Save(m);
       AUTOMATIC_UPDATE = 1;
       break; 
     case FWU_STATE_CRCVERIFIED: // integrity good, check authenticity
       BL_LOG("FWU Interrupted @ state CRCVERIFIED - checking authenticity...\r\n");
       if (Reverify_Signature(m, slot_addr)) {
-        meta.fwu_state = FWU_STATE_ECCVERIFIED;
-        Metadata_Save(&meta);
-        Metadata_UpdateAfterRecieve(&meta, meta.SLOTA_LATEST);
+        m->fwu_state = FWU_STATE_ECCVERIFIED;
+        Metadata_Save(m);
+        Metadata_UpdateAfterRecieve(m, m->SLOTA_LATEST);
       } else {
         PAL_Flash_EraseSlot(slot_addr, SLOT_NUM_PAGES);
-        meta.fwu_state = FWU_STATE_IDLE;
-        Metadata_Save(&meta);
+        m->fwu_state = FWU_STATE_IDLE;
+        Metadata_Save(m);
         AUTOMATIC_UPDATE = 1;
       }
       break;
     case FWU_STATE_ECCVERIFIED: // image trustworthy, just commit
       BL_LOG("FWU Interrupted @ state ECCVERIFIED - committing to slot...\r\n");
-      Metadata_UpdateAfterRecieve(&meta, meta.SLOTA_LATEST); // todo possibly rename the function
+      Metadata_UpdateAfterRecieve(m, m->SLOTA_LATEST); // todo possibly rename the function
       break;
     default: 
       BL_LOG("FWU Interrupted - retrying...\r\n");
       PAL_Flash_EraseSlot(slot_addr, SLOT_NUM_PAGES);
-      meta.fwu_state = FWU_STATE_IDLE;
-      Metadata_Save(&meta);
+      m->fwu_state = FWU_STATE_IDLE;
+      Metadata_Save(m);
       AUTOMATIC_UPDATE = 1;
       break;
   }
@@ -128,17 +129,22 @@ void check_interrupted_write(Metadata *m) {
 int main(void)
 {
   System_Init();
-  
+
+  BL_LOG("Sys Init Complete, loading Metadata...\r\n"); 
   Metadata_Load(&meta);
 
+  BL_LOG("Setting LED...\r\n"); 
   Task_BL_SetLED();
 
   BL_LOG("Starting bootloader (0.1)\r\n");
 
+  BL_LOG("Updating Image State...\r\n");
   update_image_state(&meta);
 
+  BL_LOG("Checking Interrupted Write...\r\n");
   check_interrupted_write(&meta);
 
+  BL_LOG("Checking for update...\r\n");
   check_for_update(&meta, AUTOMATIC_UPDATE);
   
   goto_application(&meta);
@@ -165,6 +171,11 @@ static void goto_application(Metadata *meta) {
   } else {
     BL_LOG("Jumping to application...\r\n");
     PAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+    BL_LOG("Verifying firmware signature..\r\n");
+    // if (!Reverify_Signature(meta, boot_addr)) { // todo
+    //   BL_LOG("Firmware signature verification failed, staying in bootloader...\r\n");
+    //   return; 
+    // }
     void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (boot_addr + 4U));
     /** @todo implement PAL functions needed before jumping to app */
     /*
@@ -194,7 +205,7 @@ static void check_for_update(Metadata *meta, uint8_t AUTOMATIC_UPDATE) {
   PAL_GPIO_PinState Update_Pin_State;
   uint32_t end_tick = PAL_GetTick() + 5000; // 5 seconds from now
 
-  BL_LOG("Press the User Button B1 PC13 to trigger UART update...\r\n"); // todo make this conditional if AUTOMATIC_UPDATE = 1;
+  if (!AUTOMATIC_UPDATE) BL_LOG("Press the User Button B1 PC13 to trigger UART update...\r\n"); // todo make this conditional if AUTOMATIC_UPDATE = 1;
   do {
     Update_Pin_State = PAL_GPIO_ReadPin( B1_GPIO_Port, B1_Pin ); 
     uint32_t current_tick = PAL_GetTick(); 
@@ -202,12 +213,9 @@ static void check_for_update(Metadata *meta, uint8_t AUTOMATIC_UPDATE) {
     if ((Update_Pin_State == GPIO_PIN_RESET ) || (current_tick > end_tick)) { // either button not pressed OR current tick > end_tick after 5 second window
       break;
     }
-  } while (1);
+  } while (!AUTOMATIC_UPDATE);
   if (Update_Pin_State == GPIO_PIN_RESET || AUTOMATIC_UPDATE /*|| DBG_FORCE_UPDATE*/) {
-    if (AUTOMATIC_UPDATE) {
-      BL_LOG("Interrupted update detected!\r\n");
-      if (meta->fwu_state == FWU_STATE_CRCVERIFIED) BL_LOG("power lost after crcverified!\r\n");
-    }
+    if (AUTOMATIC_UPDATE) BL_LOG("Interrupted update detected!\r\n");
     BL_LOG("Starting Firmware Download!\r\n");
     PAL_UART_Transmit((uint8_t *)"READY\r\n", 7, 100);
     PAL_UARTEx_Receive_DMA(header_buf, sizeof(header_buf));
@@ -220,6 +228,6 @@ static void check_for_update(Metadata *meta, uint8_t AUTOMATIC_UPDATE) {
     } else {
       BL_LOG("Firmware update error! Halt!\r\n"); while (1) { Task_BL_BlinkLED(); };
     }
-    // will fall to goto_application() as button not pressed within 5 secs
+    // will fall to goto_application() as button not pressed within 5 secs / automatic update
   }
 }

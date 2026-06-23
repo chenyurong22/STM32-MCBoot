@@ -1,0 +1,6 @@
+name: stmboot
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig 
+  settings:
+    dts_root: .

@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "platform.h"
-#include "board_config.h"
 
 #define METADATA_MAGIC 0xDEADBEEFU // start of metadata
 #define METADATA_SLOT_SIZE 0x1000 // 4kb

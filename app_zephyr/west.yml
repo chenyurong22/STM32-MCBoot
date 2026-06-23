@@ -1,0 +1,6 @@
+# manifest:
+#   projects:
+#     - name: stmboot
+#       url: https://github.com/ishyaboisid/stm32xboot/tree/main/stmboot
+#       revision: main
+#       path: modules/stmboot

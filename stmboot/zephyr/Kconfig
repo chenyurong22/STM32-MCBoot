@@ -1,0 +1,22 @@
+config BOOTLOADER_STMBOOT
+    bool "stmboot"
+
+if BOOTLOADER_STMBOOT
+
+config STMBOOT_CRC_ENABLED
+    bool "Hardware CRC enabled."
+    default y
+
+config STMBOOT_AES_CTR
+    bool "AES-CTR mode encryption enabled."
+    default y
+
+config STMBOOT_SHA_256
+    bool "SHA-256 hashing enabled."
+    default y
+
+config STMBOOT_EDCSA_P256
+    bool "uECC curve secp256r1 for signature verification enabled."
+    default y
+
+endif

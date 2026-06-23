@@ -59,7 +59,7 @@ PAL_Flash_StatusTypeDef Metadata_Load(Metadata *m) {
 PAL_Flash_StatusTypeDef Metadata_Save(Metadata *m) {
     uintptr_t target = return_Inactive_Metadata_Address();
     uintptr_t active_addr = return_Active_Metadata_Address(); 
-    Metadata *active = (const Metadata *)active_addr;
+    Metadata *active = (Metadata *)active_addr;
     Metadata temp = *m;
     
     temp.sequence = active->sequence + 1;

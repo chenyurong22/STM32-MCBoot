@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceFolder}",
+            "executable": "/Users/siddharthmanikant/Desktop/Bachelor_Project/app_zephyr/build/zephyr/zephyr.elf",
+            "name": "ST-Link",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "servertype": "stlink",
+            "device": "STM32F103RB"
+        }
+    ]
+}

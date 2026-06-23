@@ -8,8 +8,8 @@ A lightweight, hardware-agnostic secure bootloader for STM32 microcontrollers fe
 ### Release Build
 | Memory Region  | Used Size | Region Size | Usage % |
 |----------------|-----------|--------------|---------|
-| RAM            | 3128 B   | 20 KB        |  15.27%  |   
-| FLASH          |  12648 B  | 24 KB        |  51.46%  |
+| RAM            | 3136 B   | 20 KB        |   15.31%  |   
+| FLASH          |  13688 B  | 24 KB        |   55.70%  |
 
 ## Rational:
 Although other more sophisticated BLs exist it is of my understanding that using them without Zephyr is moderate to high effort. While they are usually OS-agnostic, Zephyr provides built-in tools (like Kconfig and partition management) that handle much of the heavy lifting. Without these, you must manually implement the underlying hardware and software requirements. **I aim to remove that porting effort for STM32 MCUs.**
@@ -39,6 +39,7 @@ In addition, these heavy duty BLs typically take a little over 32 kB of flash me
   - [Deterministic Metadata Image State Machine](#deterministic-metadata-image-state-state-machine)
 - [Logging](#logging)
 - [Bootloader Flow](#bootloader-flow)
+- [Zephyr](#zephyr)
 - [Testing](#testing)
 - [Third-Party Libraries](#third-party-libraries)
 ---
@@ -56,31 +57,44 @@ stmboot is a 24KB bootloader that sits at the start of STM32 flash memory. Moreo
 | Encryption | AES-128 CTR with random IV per update |
 | Integrity check | STM32 hardware CRC32 + Dual metadata slots with CRC check |
 | Rollback protection | Boot counter + firmware version check |
-| Power loss resistance | Power loss handling while writing or erasing flash |
+| Power loss resistance | Power loss handling while writing/erasing flash and during fw update |
 
 ---
 
 ## TBD Features
 in order of priority:
-- If CRC section in Metadata is tampered with, the faulty metadata might be validated.
-- Modules will be made removable/configurable: CRC32, AES128 Encryption, SHA256 Hashing, EDCSA, and EDCSA Curve Selection
-- Immutable Trust Chain
-  - Two-stage boot (OEMiRoT + uRoT equivalent)
-  - Bootloader self-update (wolfBoot equivalent)
-  - Memory Protection Unit (MPU) integration
-- Github Actions: Tests in GTest
-  - Feature unit tests
-  - Static tests: cppcheck, clang-tidy
-- Flash wear resistance (Wear levelling)
-- Shell
-- Settings KV store and Logging framework
-- Diagnostics at boot (ram integrity check, peripheral detection, flash wear?)
-  - Diagnostics recorded into protected memory after failure
-- Rollback: Delta History ? 
-- Self-Documenting Hardware
-  - @ boot, the device exposes itself as a USB drive containing schematics, datasheets, API docs, service manuals
-- Zephyr Integration for Bootloader + App 
-- ESP32 OTA updates
+### Housekeeping:
+	1	Test IWDG
+	2	Power loss: Make Python/BL script resume restart when possible
+	4	Verify signature before booting !! (Added commented code, currently leads to Hard_Fault)
+	5	Make modules build time configurable: CRC, AES, SHA256/EDCSA (Curve Selection) in Zephyr + no Zephyr
+	6	Github Actions/Testing:
+	◦	Feature unit tests GTest
+	◦	Integration testing
+	◦	Security testing
+	◦	Performance measurements - Boottime, verification time, update time/fw size, flash footprint, RAM footprint, flash wear resistance/levelling
+	◦	Static tests: cpp-check, clang-tidy
+### Features:
+	1	USB FWU path: dfu-util host and dfu protocol
+	2	Security:
+	◦	Cryptographic ownership transfer by rotating root keys - Public Key Infrastructure
+	◦	Immutable Trust Chain
+	1	Two-stage boot (OEMiRoT + uRoT equivalent)
+	2	Bootloader self-update (wolfBoot equivalent)
+	◦	Documentation update/Literature standards 4 report: NIST recommendations, IEC 62443, ETSI IoT security recommendations
+	3	Constant-time comparison for signature/CRC verification. avoid early-exit byte comparisons that leak timing information
+	4	Secure erase of sensitive RAM after use: zero out AES key context, decrypted chunks, and IV material after each update completes
+	5	PVD brownout check: use the STM32's Programmable Voltage Detector to defer flash writes when voltage is already sagging
+### Extensions:
+	1	Zephyr Sysbuild
+	2	Shell
+	3	Settings/Meta KV store
+	4	Diagnostics at boot (ram integrity check, peripheral detection, flash wear?) 
+	1	Diagnostics recorded into protected memory after failure
+	5	Rollback: Delta History
+	6	Self-Documenting Hardware
+	1	@ boot, the device exposes itself as a USB drive containing schematics, datasheets, API docs, service manuals
+	8	ESP32 OTA update path -> UART (espIDF mbedTLS)
 
 ## Architecture
 
@@ -125,7 +139,6 @@ stmboot/
 ---
 
 ## Memory Layout
-> Redundant atp
 ```
 STM32F103RB — 128KB Flash
 ─────────────────────────────────────────────────────
@@ -226,7 +239,7 @@ Application.signed.bin
       ▼  encrypt_firmware.py  (AES-128 CTR, random IV)
 Application.enc.bin
       │
-      ▼  send_test_dma.py  (UART transfer with ACK/NACK handshake)
+      ▼  send_test_ab.py  (UART transfer with ACK/NACK handshake)
       │
       ▼  MCU: decrypt → CRC → ECDSA verify → flash write
 ```
@@ -373,92 +386,20 @@ Logging is compile-time configurable via `BL_LOG_LEVEL`. Set in `CMakeLists.txt`
 ---
 
 ## Bootloader Flow
-
+todo
 ```mermaid
-flowchart TD
-    RESET([Reset]) --> SYSINIT[System_Init\nHAL + clocks + peripherals]
-    SYSINIT --> IWDG_CHECK{IWDG reset\ndetected?}
-    IWDG_CHECK -->|yes| INCREMENT[runtime_fault_count++]
-    IWDG_CHECK -->|no| LOAD
-    INCREMENT --> LOAD
-
-    LOAD[Metadata_Load\nvalidate magic + CRC] --> WRITE_STATE_CHECK{write_state\n!= IDLE?}
-
-    WRITE_STATE_CHECK -->|yes| INTERRUPTED[check_interrupted_write]
-    WRITE_STATE_CHECK -->|no| STATE
-
-    INTERRUPTED --> ERASE_CHECK{write_state ==\nERASING or\nIN_PROGRESS?}
-    ERASE_CHECK -->|yes| RE_ERASE[Re-erase staging slot\nwrite_state = IDLE\n = 0\nMetadata_Save]
-    RE_ERASE --> SEND_RESTART[Send RESUME_RESTART\nPython retransmits from byte 0]
-    SEND_RESTART --> STATE
-
-    ERASE_CHECK -->|no, COMPLETE| RE_VERIFY{ECDSA verify\nfrom flash?}
-    RE_VERIFY -->|pass| MARK_PENDING[image_state = PENDING\nwrite_state = IDLE\nflip SLOTA_LATEST\nMetadata_Save]
-    MARK_PENDING --> STATE
-    RE_VERIFY -->|fail| RE_ERASE2[Re-erase staging slot\nwrite_state = IDLE\nMetadata_Save]
-    RE_ERASE2 --> SEND_RESTART2[Send RESUME_RESTART]
-    SEND_RESTART2 --> STATE
-
-    STATE[update_image_state] --> NONE_CHECK{image_state\n== NONE?}
-    NONE_CHECK -->|yes| UPDATE_CHECK
-    NONE_CHECK -->|no| PENDING_CHECK
-
-    PENDING_CHECK{image_state\n== PENDING?} -->|yes| SET_TRIAL[Set TRIAL\nreset bootcount\nMetadata_Save]
-    SET_TRIAL --> UPDATE_CHECK
-    PENDING_CHECK -->|no| TRIAL_CHECK
-
-    TRIAL_CHECK{image_state\n== TRIAL?} -->|yes| INC_BOOT[bootcount++\nMetadata_Save]
-    INC_BOOT --> ROLLBACK_CHECK{bootcount >\nBOOT_COUNT_MAX?}
-    ROLLBACK_CHECK -->|yes| ROLLBACK[REVERTED\nflip SLOTA_LATEST\nMetadata_Save]
-    ROLLBACK --> UPDATE_CHECK
-    ROLLBACK_CHECK -->|no| UPDATE_CHECK
-
-    TRIAL_CHECK -->|no| HEALTHY_CHECK
-    HEALTHY_CHECK{image_state\n== HEALTHY?} -->|yes| FAULT_CHECK{runtime_fault_count\n> RUNTIME_MAX?}
-    FAULT_CHECK -->|yes| ROLLBACK
-    FAULT_CHECK -->|no| UPDATE_CHECK
-    HEALTHY_CHECK -->|no| REVERTED_CHECK
-
-    REVERTED_CHECK{image_state\n== REVERTED?} -->|yes| MARK_HEALTHY[Set HEALTHY\nreset counters\nMetadata_Save]
-    MARK_HEALTHY --> UPDATE_CHECK
-
-    UPDATE_CHECK[check_for_update\n5-second B1 window] --> BTN{Button\npressed?}
-
-    BTN -->|yes| READY[Send READY\nAwait header + FW version]
-    READY --> VERSION{New version >\ncurrent version?}
-    VERSION -->|no| NACK_VER[NACK — version rejected]
-    NACK_VER --> GOTO_APP
-    VERSION -->|yes| SET_ERASING[write_state = ERASING\n = total_len\nMetadata_Save]
-    SET_ERASING --> ERASE[Erase staging slot]
-    ERASE --> SET_INPROGRESS[write_state = IN_PROGRESS\nMetadata_Save]
-    SET_INPROGRESS --> RECV_IV[Receive IV\nstore in meta->iv\nMetadata_Save\nACK]
-    RECV_IV --> RECV_SIZE[Receive SIZE\nACK]
-    RECV_SIZE --> RECV[Receive chunks\nDecrypt AES-128 CTR\nAccumulate HW CRC32\nWrite to flash\n\nACK per chunk]
-    RECV --> SET_COMPLETE[write_state = COMPLETE\nMetadata_Save]
-    SET_COMPLETE --> CRC_OK{CRC32\nmatches?}
-    CRC_OK -->|no| NACK_CRC[NACK — erase staging slot\nwrite_state = IDLE\nMetadata_Save]
-    NACK_CRC --> GOTO_APP
-    CRC_OK -->|yes| ECDSA{ECDSA P-256\nverified?}
-    ECDSA -->|no| NACK_SIG[NACK — erase staging slot\nwrite_state = IDLE\nMetadata_Save]
-    NACK_SIG --> GOTO_APP
-    ECDSA -->|yes| META_UPDATE[Metadata_UpdateAfterReceive\nimage_state = PENDING\nwrite_state = IDLE\nflip SLOTA_LATEST\nstore IV + \nMetadata_Save]
-    META_UPDATE --> OK[Send OK\nSystemReset]
-
-    BTN -->|no, timeout| GOTO_APP
-
-    GOTO_APP[goto_application] --> VALID{Stack pointer\n!= 0xFFFFFFFF?}
-    VALID -->|no| STAY[Stay in bootloader\nwait for update]
-    VALID -->|yes| DEINIT[PAL_UART_DeInit\nPAL_DMA_DeInit\nPAL_CRC_DeInit\nDisable EXTI IRQ\nSysTick stop\n__disable_irq]
-    DEINIT --> VTOR[SCB->VTOR = slot address]
-    VTOR --> MSP[__set_MSP]
-    MSP --> JUMP([Jump to application])
+todo
 ```
+
+## Zephyr
+- Currently STMBoot should be flashed seperately before using the app_zephyr. 
+- app_zephyr can use the APIs defined in stmboot/zephyr/lib/stmboot_api.c
+- Possible TODO to make it a sysbuild although this might void the RoT chain
 
 ---
 ## Testing
-!! todo further
 - Github Actions: Tests in GTest
-  - File unit tests: Ceedling - CMock
+  - File unit tests: Ceedling - CMock // still todo
   - Static tests: cppcheck, clang-tidy
 ---
 ## Third-Party Libraries

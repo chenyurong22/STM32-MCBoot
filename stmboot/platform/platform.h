@@ -1,6 +1,8 @@
 #pragma once
 
-#if defined(BOARD_F103RB)
+#ifdef __ZEPHYR__
+  #include "../zephyr/include/zephyr_board_shim.h"
+#elif defined(BOARD_F103RB)
   #define PAL_MAX_DELAY      0xFFFFFFFFU
   #include "bsp/f103rb/board_config.h"
   #include "bsp/f103rb/pinmap.h"

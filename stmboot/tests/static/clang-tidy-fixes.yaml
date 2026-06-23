@@ -189,10 +189,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'function ''update_image_state'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      943
+      FileOffset:      941
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          938
+          Offset:          936
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -201,15 +201,27 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      972
+      FileOffset:      970
       Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
+  - DiagnosticName:  readability-non-const-parameter
+    DiagnosticMessage:
+      Message:         'pointer parameter ''m'' can be pointer to const'
+      FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
+      FileOffset:      970
+      Replacements:
+        - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
+          Offset:          960
+          Length:          0
+          ReplacementText: 'const '
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
   - DiagnosticName:  misc-include-cleaner
     DiagnosticMessage:
       Message:         'no header providing "BL_LOG" is directly included'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      1311
+      FileOffset:      1291
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -217,10 +229,10 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'function ''check_interrupted_write'' can be made static to enforce internal linkage'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      2127
+      FileOffset:      2083
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          2122
+          Offset:          2078
           Length:          0
           ReplacementText: 'static '
     Level:           Warning
@@ -229,7 +241,7 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'parameter name ''m'' is too short, expected at least 3 characters'
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      2161
+      FileOffset:      2117
       Replacements:    []
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -237,19 +249,19 @@ Diagnostics:
     DiagnosticMessage:
       Message:         'do not use ''else'' after ''return'''
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      5566
+      FileOffset:      5729
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          5566
+          Offset:          5729
           Length:          5
           ReplacementText: ''
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          5571
+          Offset:          5734
           Length:          1063
           ReplacementText: "\n    BL_LOG(\"Jumping to application...\\r\\n\");\r\n    PAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);\r\n    void (*app_reset_handler)(void) = (void *) ( *(volatile uint32_t *) (boot_addr + 4U));\r\n    /** @todo implement PAL functions needed before jumping to app */\r\n    /*\r\n    HAL_DeInit();        // de-init peripherals + mask SysTick IRQ\r\n    SysTick->CTRL = 0;  // fully stop the counter itself\r\n    __disable_irq(); // EXTI interrupt enabled (blue button, EXTI15_10_IRQn). If fired during/after jump, before app sets up SCB->VTOR, will call the bootloader's ISR handler — which no longer has a valid stack context\r\n    */\r\n    SCB->VTOR = boot_addr;\r\n    __set_MSP(*(volatile uint32_t *)boot_addr); // used by CPU for exception handlers, HardFaults, SysTick, UART interrupts, any ISR. psp = application thread code\r\n    /** @todo TEST IWDG AND COMMIT */\r\n    /*\r\n    #ifdef DEBUG\r\n    PAL_FREEZE_IWDG();  // don't let breakpoints trigger resets\r\n    #endif\r\n    PAL_MX_IWDG_Init();\r\n    */\r\n    app_reset_handler(); // call function pointer \r\n "
       Ranges:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          FileOffset:      5566
+          FileOffset:      5729
           Length:          4
     Level:           Warning
     BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
@@ -257,14 +269,30 @@ Diagnostics:
     DiagnosticMessage:
       Message:         statement should be inside braces
       FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-      FileOffset:      7660
+      FileOffset:      7182
       Replacements:
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          7660
+          Offset:          7182
           Length:          0
           ReplacementText: ' {'
         - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
-          Offset:          7705
+          Offset:          7308
+          Length:          0
+          ReplacementText: "\n}"
+    Level:           Warning
+    BuildDirectory:  '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot'
+  - DiagnosticName:  readability-braces-around-statements
+    DiagnosticMessage:
+      Message:         statement should be inside braces
+      FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
+      FileOffset:      7756
+      Replacements:
+        - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
+          Offset:          7756
+          Length:          0
+          ReplacementText: ' {'
+        - FilePath:        '/Users/siddharthmanikant/Desktop/Bachelor_Project/stmboot/boot/main.c'
+          Offset:          7800
           Length:          0
           ReplacementText: "\n}"
     Level:           Warning

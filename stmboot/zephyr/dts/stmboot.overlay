@@ -1,0 +1,40 @@
+
+/ {
+    chosen {
+        zephyr,code-partition = &stmboot_slot0_partition;
+    };
+};
+
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        boot_partition: partition@0 {
+            label = "stmboot";
+            reg = <0x00000000 0x00006000>;  /* 24KB */
+            read-only;
+        };
+
+        stmboot_slot0_partition: partition@6000 {
+            label = "image-0";
+            reg = <0x00006000 0x0000C000>;  /* 48KB slot A */
+        };
+
+        stmboot_slot1_partition: partition@12000 {
+            label = "image-1";
+            reg = <0x00012000 0x0000C000>;  /* 48KB slot B */
+        };
+
+        metadata_slot0_partition: partition@1E000 {
+            label = "stmboot-meta-0";
+            reg = <0x0001E000 0x00001000>;  /* 4KB metadata copy 1 */
+        };
+
+        metadata_slot1_partition: partition@1F000 {
+            label = "stmboot-meta-1";
+            reg = <0x0001F000 0x00001000>;  /* 4KB metadata copy 2 */
+        };
+    };
+};

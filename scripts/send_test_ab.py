@@ -194,12 +194,41 @@ if __name__ == "__main__":
 
     while True:
         try:
-            ser = serial.Serial(PORT, BAUDRATE, timeout=0.2)
-            print(f"Connected to {PORT}")
+            # wait until the device is physically connected
+            ser = None
+            while ser is None:
+                try:
+                    ser = serial.Serial(PORT, BAUDRATE, timeout=0.2)
+                    print(f"Connected to {PORT}")
+                except serial.SerialException:
+                    print("Waiting for device...")
+                    time.sleep(1)
+
+            with ser:
+                waiting_for_ready(ser, timeout_s=10)
+                send_firmware(ser)
+
+            # success — exit the outer loop
             break
-        except serial.SerialException:
-            print("Waiting for device...")
+
+        except (serial.SerialException, OSError) as e:
+            # power loss / USB disconnect / port disappeared mid-transfer
+            print(f"\nConnection lost: {e}")
+            print("Reconnecting...\n")
             time.sleep(1)
-    with serial.Serial(PORT, BAUDRATE, timeout=0.2) as ser:
-        waiting_for_ready(ser, timeout_s=10)
-        send_firmware(ser)
+            continue
+
+        except TimeoutError as e:
+            # READY or ACK timeout — board may have reset or lost power
+            print(f"\nTimeout: {e}")
+            print("Retrying from the beginning...\n")
+            time.sleep(1)
+            continue
+
+        except RuntimeError as e:
+            # unexpected response (e.g. NACK) — don't loop forever silently,
+            # but still retry since power loss can cause garbage on the line
+            print(f"\nProtocol error: {e}")
+            print("Retrying from the beginning...\n")
+            time.sleep(1)
+            continue
